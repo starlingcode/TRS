@@ -1,0 +1,46 @@
+{
+  "slug": "StarlingTRS",
+  "name": "Starling TRS",
+  "version": "1.0.0",
+  "license": "MIT",
+  "brand": "Starling",
+  "author": "Starling",
+  "authorEmail": "admin@starling.space",
+  "authorUrl": "starling.space",
+  "pluginUrl": "starling.space",
+  "manualUrl": "starling.space",
+  "sourceUrl": "",
+  "donateUrl": "",
+  "modules": [
+    {
+      "slug": "BalanceMergePan",
+      "name": "Balance/Merge/Pan",
+      "description": "Balance and merge and pan",
+      "tags": []
+    },
+    {
+      "slug": "QuadLFO",
+      "name": "QuadLFO",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TSTRSTS",
+      "name": "TSTRSTS",
+      "description": "Stereo utility",
+      "tags": []
+    },
+    {
+      "slug": "FieldOps",
+      "name": "FieldOps",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TRSVCF",
+      "name": "TRSVCF",
+      "description": "",
+      "tags": []
+    }
+  ]
+}
