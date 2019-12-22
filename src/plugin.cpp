@@ -11,7 +11,7 @@ void init(Plugin *p) {
     p->addModel(modelBalanceMergePan);
     p->addModel(modelQuadLFO);
     p->addModel(modelTSTRSTS);
-    p->addModel(modelFieldOps);
+    p->addModel(modelAddSub);
     p->addModel(modelTRSVCF);
 
     // Any other plugin initialization may go here.

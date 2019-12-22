@@ -10,5 +10,5 @@ extern Plugin *pluginInstance;
 extern Model *modelBalanceMergePan;
 extern Model *modelQuadLFO;
 extern Model *modelTSTRSTS;
-extern Model *modelFieldOps;
+extern Model *modelAddSub;
 extern Model *modelTRSVCF;

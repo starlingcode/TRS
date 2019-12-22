@@ -1,7 +1,7 @@
 #include "trs.hpp"
 
 
-struct FieldOps : Module {
+struct AddSub : Module {
     enum ParamIds {
         NUM_PARAMS
     };
@@ -41,7 +41,7 @@ struct FieldOps : Module {
     StereoOutHandler stereo56Out;
     StereoOutHandler stereo78Out;
 
-    FieldOps() {
+    AddSub() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         stereo1In.configure(&inputs[IN1_INPUT]);
@@ -84,31 +84,31 @@ struct FieldOps : Module {
 };
 
 
-struct FieldOpsWidget : ModuleWidget {
-    FieldOpsWidget(FieldOps *module) {
+struct AddSubWidget : ModuleWidget {
+    AddSubWidget(AddSub *module) {
         setModule(module);
-        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/FieldOps.svg")));
+        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/AddSub.svg")));
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH/2, 0)));
+        // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH/2, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 15.247)), module, FieldOps::IN1_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 15.247)), module, FieldOps::IN2_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 43.822)), module, FieldOps::IN3_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 43.822)), module, FieldOps::IN4_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 84.747)), module, FieldOps::IN5_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 84.747)), module, FieldOps::IN6_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 113.247)), module, FieldOps::IN7_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 113.247)), module, FieldOps::IN8_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 15.247)), module, AddSub::IN1_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 15.247)), module, AddSub::IN2_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 43.822)), module, AddSub::IN3_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 43.822)), module, AddSub::IN4_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 84.747)), module, AddSub::IN5_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 84.747)), module, AddSub::IN6_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 113.247)), module, AddSub::IN7_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 113.247)), module, AddSub::IN8_INPUT));
 
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 27.8)), module, FieldOps::OUT12_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 56.375)), module, FieldOps::OUT34_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 72.25)), module, FieldOps::OUT56_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 100.75)), module, FieldOps::OUT78_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 27.8)), module, AddSub::OUT12_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 56.375)), module, AddSub::OUT34_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 72.25)), module, AddSub::OUT56_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 100.75)), module, AddSub::OUT78_OUTPUT));
     }
 };
 
 
-Model *modelFieldOps = createModel<FieldOps, FieldOpsWidget>("FieldOps");
+Model *modelAddSub = createModel<AddSub, AddSubWidget>("AddSub");
