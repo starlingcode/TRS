@@ -40,7 +40,7 @@ struct fourPolePhaser {
     }
 
     T process(T input) {
-        T signal = stage1.process(input + feedback * stage4.d2);
+        T signal = stage1.process(input + feedback * -stage4.d2);
         signal = stage2.process(signal);
         signal = stage3.process(signal);
         signal = stage4.process(signal);
