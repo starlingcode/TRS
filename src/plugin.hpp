@@ -12,3 +12,4 @@ extern Model *modelQuadLFO;
 extern Model *modelTSTRSTS;
 extern Model *modelAddSub;
 extern Model *modelTRSVCF;
+extern Model *modelTRSVCPH;

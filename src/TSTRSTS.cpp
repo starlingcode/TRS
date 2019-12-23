@@ -32,8 +32,8 @@ struct TSTRSTS : Module {
     StereoOutHandler stereo1Out;
     StereoOutHandler stereo2Out;
 
-    int out1Channels;
-    int out2Channels;
+    int out1Channels = 1;
+    int out2Channels = 1;
 
     TSTRSTS() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
