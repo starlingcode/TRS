@@ -106,11 +106,11 @@ struct TRSVCPH : Module {
             float_4 fb = float_4(params[FB_PARAM].getValue());
             float_4 cvDepth = float_4(params[CVAMT_PARAM].getValue());
 
-            float_4 freq = clamp(cv.getLeft(polyChunk)/float_4(10.f) * cvDepth + 0.5f, float_4(0.f), float_4(1.f));
+            float_4 freq = clamp(cv.getLeft(polyChunk)/float_4(5.f) * cvDepth, float_4(-1.f), float_4(1.f));
             phasers[0][polyChunk].setParams(freq, fb);
             float_4 phasedL = phasers[0][polyChunk].process(inL);
 
-            freq = clamp(cv.getRight(polyChunk)/float_4(10.f) * cvDepth + 0.5f, float_4(0.f), float_4(1.f));
+            freq = clamp(cv.getRight(polyChunk)/float_4(5.f) * cvDepth, float_4(-1.f), float_4(1.f));
             phasers[1][polyChunk].setParams(freq, fb);
             float_4 phasedR = phasers[1][polyChunk].process(inR);
 
