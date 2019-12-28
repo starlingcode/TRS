@@ -47,6 +47,12 @@
       "name": "TRSVCPH",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "TRSMS",
+      "name": "TRSMS",
+      "description": "",
+      "tags": []
     }
   ]
 }

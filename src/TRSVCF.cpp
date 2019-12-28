@@ -29,13 +29,12 @@ struct JOSSVF {
 
         // float_4 flip = sgn(linFM);
 
-        resFreq = clamp(resFreq, 0.0, 20000.0);
-
         // normalized target cutoff frequency
         // also using notation from paper
-        float_4 w = resFreq * T * 2 * M_PI;
+        float_4 w = sin(resFreq * T * 2 * M_PI);
         // float w = 0.1;
 
+        w = clamp(w, 0.f, 1.91f);
 
         // resonance, given in paper as sqrt(2)
         float_4 q = res * 2.0;

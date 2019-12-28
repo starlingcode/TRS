@@ -54,11 +54,11 @@ struct TSTRSTS : Module {
 
         for (int polyChunk = 0; polyChunk < 2; polyChunk ++) {
 
-            stereo1Out.setLeft(inputs[L1_INPUT].getNormalVoltageSimd<float_4>(inputs[R1_INPUT].getNormalVoltageSimd<float_4>(0.f, 4 * polyChunk), 4 * polyChunk), polyChunk);
-            stereo1Out.setRight(inputs[R1_INPUT].getNormalVoltageSimd<float_4>(inputs[L1_INPUT].getNormalVoltageSimd<float_4>(0.f, 4 * polyChunk), 4 * polyChunk), polyChunk);
+            stereo1Out.setLeft(inputs[L1_INPUT].getNormalVoltageSimd<float_4>(inputs[R1_INPUT].getVoltageSimd<float_4>(4 * polyChunk), 4 * polyChunk), polyChunk);
+            stereo1Out.setRight(inputs[R1_INPUT].getNormalVoltageSimd<float_4>(inputs[L1_INPUT].getVoltageSimd<float_4>(4 * polyChunk), 4 * polyChunk), polyChunk);
 
-            stereo2Out.setLeft(inputs[L2_INPUT].getNormalVoltageSimd<float_4>(inputs[R2_INPUT].getNormalVoltageSimd<float_4>(0.f, 4 * polyChunk), 4 * polyChunk), polyChunk);
-            stereo2Out.setRight(inputs[R2_INPUT].getNormalVoltageSimd<float_4>(inputs[L2_INPUT].getNormalVoltageSimd<float_4>(0.f, 4 * polyChunk), 4 * polyChunk), polyChunk);
+            stereo2Out.setLeft(inputs[L2_INPUT].getNormalVoltageSimd<float_4>(inputs[R2_INPUT].getVoltageSimd<float_4>(4 * polyChunk), 4 * polyChunk), polyChunk);
+            stereo2Out.setRight(inputs[R2_INPUT].getNormalVoltageSimd<float_4>(inputs[L2_INPUT].getVoltageSimd<float_4>(4 * polyChunk), 4 * polyChunk), polyChunk);
 
             outputs[L1_OUTPUT].setVoltageSimd<float_4>(stereo1In.getLeft(polyChunk), 4 * polyChunk);
             outputs[R1_OUTPUT].setVoltageSimd<float_4>(stereo1In.getRight(polyChunk), 4 * polyChunk);
@@ -176,7 +176,7 @@ struct TSTRSTSWidget : ModuleWidget {
         menu->addChild(polyphony1);
 
         menu->addChild(new MenuEntry);
-        Polyphony2Item *polyphony2 = createMenuItem<Polyphony2Item>("TRS to TS 1 Channels");
+        Polyphony2Item *polyphony2 = createMenuItem<Polyphony2Item>("TRS to TS 2 Channels");
         polyphony2->module = module;
         polyphony2->rightText = string::f("%d", module->out2Channels) + " " + RIGHT_ARROW;
         menu->addChild(polyphony2);
