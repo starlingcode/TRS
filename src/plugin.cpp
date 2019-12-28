@@ -15,6 +15,8 @@ void init(Plugin *p) {
     p->addModel(modelTRSVCF);
     p->addModel(modelTRSVCPH);
     p->addModel(modelTRSMS);
+    p->addModel(modelTRS8NU8);
+    p->addModel(modelTRS2QVCA);
 
     // Any other plugin initialization may go here.
     // As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.
