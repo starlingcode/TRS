@@ -55,6 +55,12 @@
       "tags": []
     },
     {
+      "slug": "TRSMS",
+      "name": "TRSMS",
+      "description": "",
+      "tags": []
+    },
+    {
       "slug": "TRS8NU8",
       "name": "TRS8NU8",
       "description": "",
@@ -63,6 +69,12 @@
     {
       "slug": "TRS2QVCA",
       "name": "TRS2QVCA",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TRSMS2",
+      "name": "TRSMS2",
       "description": "",
       "tags": []
     }

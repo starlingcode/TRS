@@ -14,5 +14,6 @@ extern Model *modelAddSub;
 extern Model *modelTRSVCF;
 extern Model *modelTRSVCPH;
 extern Model *modelTRSMS;
+extern Model *modelTRSMS2;
 extern Model *modelTRS8NU8;
 extern Model *modelTRS2QVCA;

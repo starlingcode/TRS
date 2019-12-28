@@ -15,6 +15,7 @@ void init(Plugin *p) {
     p->addModel(modelTRSVCF);
     p->addModel(modelTRSVCPH);
     p->addModel(modelTRSMS);
+    p->addModel(modelTRSMS2);
     p->addModel(modelTRS8NU8);
     p->addModel(modelTRS2QVCA);
 

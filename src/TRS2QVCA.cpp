@@ -82,32 +82,37 @@ struct TRS2QVCA : Module {
         return clamp((knob + cv + float_4(5.f)) / float_4(2.f) , float_4(0.f), float_4(5.f));
     }
 
+    inline void assignSwitches(void) {
+
+        int mode = (int) params[MODE1_PARAM].getValue();
+
+        switch (mode) {
+            case 0: getCV1 = &TRS2QVCA::rectify;
+                break;
+            case 1: getCV1 = &TRS2QVCA::clip;
+                break;
+            case 2: getCV1 = &TRS2QVCA::scale;
+                break;
+        }
+
+        mode = (int) params[MODE2_PARAM].getValue();
+
+        switch (mode) {
+            case 0: getCV2 = &TRS2QVCA::rectify;
+                break;
+            case 1: getCV2 = &TRS2QVCA::clip;
+                break;
+            case 2: getCV2 = &TRS2QVCA::scale;
+                break;
+        }
+    }
+
 
     void process(const ProcessArgs &args) override {
 
         if (parseSwitches.process()) {
 
-            int mode = (int) params[MODE1_PARAM].getValue();
-
-            switch (mode) {
-                case 0: getCV1 = &TRS2QVCA::rectify;
-                    break;
-                case 1: getCV1 = &TRS2QVCA::clip;
-                    break;
-                case 2: getCV1 = &TRS2QVCA::scale;
-                    break;
-            }
-
-            mode = (int) params[MODE2_PARAM].getValue();
-
-            switch (mode) {
-                case 0: getCV2 = &TRS2QVCA::rectify;
-                    break;
-                case 1: getCV2 = &TRS2QVCA::clip;
-                    break;
-                case 2: getCV2 = &TRS2QVCA::scale;
-                    break;
-            }
+            assignSwitches();
 
         }
 
