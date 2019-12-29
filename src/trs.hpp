@@ -151,9 +151,13 @@ struct Delay {
 	uint32_t writeIndex = 0;
 	// in ms
 	float sampleTime = (1.f/48000.f) * 1000.f;
+	T differentiator = T(0.f);
+	T leakyIntegrator = T(0.f);
 
-	void write(T input) {
-		buffer[writeIndex] = input;
+	void writeDCBlock(T input) {
+		leakyIntegrator = input - differentiator + 0.99f * leakyIntegrator;
+		buffer[writeIndex] = leakyIntegrator;
+		differentiator = input;
 		writeIndex ++;
 		writeIndex -= (writeIndex == length) * length;
 	}
@@ -168,7 +172,6 @@ struct Delay {
 		previousSample += (previousSample < 0) * length;
 
 		return buffer[nextSample] + (buffer[previousSample] - buffer[nextSample]) * frac;
-
 	}
 
 	void changeSR(float sr) {

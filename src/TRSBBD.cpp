@@ -65,8 +65,8 @@ struct TRSBBD : Module {
             float_4 fbR = clamp(float_4(params[FEEDBACK_PARAM].getValue()) + fbIn.getLeft(polyChunk) / float_4(5.f), 0.f, 0.99f);
 
             // add dc blockaz
-            delays[0][polyChunk].write(signalIn.getLeft(polyChunk) + leftTap * fbL);
-            delays[1][polyChunk].write(signalIn.getRight(polyChunk) + rightTap * fbR);
+            delays[0][polyChunk].writeDCBlock(signalIn.getLeft(polyChunk) + leftTap * fbL);
+            delays[1][polyChunk].writeDCBlock(signalIn.getRight(polyChunk) + rightTap * fbR);
 
             signalOut.setLeft(leftTap, polyChunk);
             signalOut.setRight(rightTap, polyChunk);
