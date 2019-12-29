@@ -1,24 +1,6 @@
 #include "trs.hpp"
 
-template <typename T = float>
-struct AP1 {
-
-    AP1() {}
-
-    T process(T input) {
-        T out1 = (input - d2) * a0 + d1;
-        d1 = input;
-        d2 = out1;
-        return out1;
-    }
-
-    T d1 = T(0);
-    T d2 = T(0);
-
-    T a0 = T(0);
-
-};
-
+// shoving the delay in the feedback path makes this unstable
 template <typename T = float>
 struct fourPolePhaser {
 
@@ -138,8 +120,8 @@ struct TRSVCPHWidget : ModuleWidget {
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 17.609)), module, TRSVCPH::FB_PARAM));
-        addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 41.109)), module, TRSVCPH::MIX_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 17.609)), module, TRSVCPH::FB_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 41.109)), module, TRSVCPH::MIX_PARAM));
         addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 64.609)), module, TRSVCPH::CVAMT_PARAM));
 
         addInput(createInputCentered<HexJack>(mm2px(Vec(8.953, 99.471)), module, TRSVCPH::IN_INPUT));

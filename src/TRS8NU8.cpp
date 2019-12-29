@@ -136,7 +136,7 @@ struct TRS8NU8Widget : ModuleWidget {
         addParam(createParamCentered<Trimpot>(mm2px(Vec(16.433, 55.619)), module, TRS8NU8::ATTR2_PARAM));
         addParam(createParamCentered<Trimpot>(mm2px(Vec(6.983, 72.77)), module, TRS8NU8::ATTL3_PARAM));
         addParam(createParamCentered<Trimpot>(mm2px(Vec(16.385, 82.786)), module, TRS8NU8::ATTR3_PARAM));
-        addParam(createParamCentered<SifamGrey>(mm2px(Vec(38.978, 106.573)), module, TRS8NU8::ATT4_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(38.978, 106.573)), module, TRS8NU8::ATT4_PARAM));
 
         addInput(createInputCentered<HexJack>(mm2px(Vec(9.307, 22.485)), module, TRS8NU8::IN1_INPUT));
         addInput(createInputCentered<HexJack>(mm2px(Vec(29.903, 50.498)), module, TRS8NU8::IN2_INPUT));

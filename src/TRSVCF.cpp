@@ -1,63 +1,5 @@
 #include "trs.hpp"
 
-// needs the diodes
-struct JOSSVF {
-
-    float_4 delay1 = float_4(0);
-    float_4 delay2 = float_4(0);
-
-    float_4 hpOut = float_4(0);
-    float_4 bpOut = float_4(0);
-    float_4 lpOut = float_4(0);
-
-    JOSSVF() {};
-
-    inline void process(float cutoff, float res, float_4 input, float_4 linFM, float_4 expoFM, float_4 resCV) {
-
-        float_4 sr = APP->engine->getSampleRate();
-
-        // Using notation from paper, sampling interval in seconds
-        float_4 T = 1.0/sr;
-
-        // absolute target cutoff frequency
-        float_4 resFreq = 30.0 * pow(2.0, cutoff * 12.0);
-        resFreq *= dsp::approxExp2_taylor5(expoFM + float_4(5.f)) / float_4(1024.f);
-
-        linFM += 5.0;
-
-        resFreq *= clamp(linFM, 0.1f, 10.f)/float_4(5.f);
-
-        // float_4 flip = sgn(linFM);
-
-        // normalized target cutoff frequency
-        // also using notation from paper
-        float_4 w = sin(resFreq * T * 2 * M_PI);
-        // float w = 0.1;
-
-        w = clamp(w, 0.f, 1.91f);
-
-        // resonance, given in paper as sqrt(2)
-        float_4 q = res * 2.0;
-        q = 2.0 - q;
-
-        // float_4 q = float_4(1.f);
-
-        float_4 highpass = input/float_4(5.f) - delay2 - delay1 * q;
-        float_4 bandpass = highpass * w + delay1;
-        float_4 lowpass = bandpass * w + delay2;
-
-        delay1 = bandpass;
-        delay2 = lowpass;
-
-        lpOut = lowpass * float_4(5.f);
-        bpOut = bandpass * float_4(5.f);
-        hpOut = highpass * float_4(5.f);
-
-    }
-
-};
-
-
 struct TRSVCF : Module {
     enum ParamIds {
         FREQ_PARAM,
@@ -109,7 +51,7 @@ struct TRSVCF : Module {
     float_4 delay1 = float_4(0);
     float_4 delay2 = float_4(0);
 
-    JOSSVF filters[2][2];
+    JOSSVF<float_4> filters[2][2];
 
     void process(const ProcessArgs &args) override {
 
@@ -147,7 +89,7 @@ struct TRSVCFWidget : ModuleWidget {
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 17.609)), module, TRSVCF::FREQ_PARAM));
+        addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 17.609)), module, TRSVCF::FREQ_PARAM));
         addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 41.109)), module, TRSVCF::RES_PARAM));
 
         addInput(createInputCentered<HexJack>(mm2px(Vec(15.364, 71.496)), module, TRSVCF::IN_INPUT));

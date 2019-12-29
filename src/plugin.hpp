@@ -17,3 +17,7 @@ extern Model *modelTRSMS;
 extern Model *modelTRSMS2;
 extern Model *modelTRS8NU8;
 extern Model *modelTRS2QVCA;
+extern Model *modelTRSSINCOS;
+extern Model *modelTRSBBD;
+extern Model *modelTRSPEAK;
+extern Model *modelTRSXOVER;

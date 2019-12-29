@@ -126,8 +126,8 @@ struct QuadLFOWidget : ModuleWidget {
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(14.363, 17.609)), module, QuadLFO::RATE1_PARAM));
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.24, 105.246)), module, QuadLFO::RATE2_PARAM));
+        addParam(createParamCentered<SifamGrey>(mm2px(Vec(14.363, 17.609)), module, QuadLFO::RATE1_PARAM));
+        addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.24, 105.246)), module, QuadLFO::RATE2_PARAM));
 
         addInput(createInputCentered<HexJack>(mm2px(Vec(14.74, 48.541)), module, QuadLFO::RATE1_INPUT));
         addInput(createInputCentered<HexJack>(mm2px(Vec(15.24, 74.313)), module, QuadLFO::RATE2_INPUT));

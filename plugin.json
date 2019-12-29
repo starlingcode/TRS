@@ -77,6 +77,30 @@
       "name": "TRSMS2",
       "description": "",
       "tags": []
+    },
+    {
+      "slug": "TRSSINCOS",
+      "name": "TRSSINCOS",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TRSBBD",
+      "name": "TRSBBD",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TRSXOVER",
+      "name": "TRSXOVER",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TRSPEAK",
+      "name": "TRSPEAK",
+      "description": "",
+      "tags": []
     }
   ]
 }
