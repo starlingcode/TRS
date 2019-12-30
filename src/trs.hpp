@@ -184,3 +184,365 @@ struct Delay {
 	}
 
 };
+
+// from DAFX '18 Holters and Parker "Combined Model for a Bucket Brigade Device and its Input and Output Filters"
+
+template <typename T = float_4, int32_t SIZE = 256>
+struct BBD {
+
+	//
+	// delay line
+	//
+
+	T bbd[SIZE];
+	T lastOut;
+	int bbdWrite = 0;
+
+	void writeBBD(float input) {
+		bbd[bbdWrite] = input;
+		bbdWrite++;
+		bbdWrite -= (bbdWrite = SIZE) * SIZE;
+	}
+
+	T readBBD(void) {
+		return bbd[bbdWrite];
+	}
+
+	T readBBDDelta(void) {
+		T output = bbd[bbdWrite] - lastOut;
+		lastOut = bbdWrite;
+		return output;
+	}
+
+	float clockFreq;
+	float hostSampleTime;
+
+	//
+	// coefficient precalculation helpers
+	//
+
+	float complexMagnitude(float r, float i) {
+		sqrt(r * r + i * i);
+	}
+	float complexAngle(float r, float i) {
+		return atan2(r, i);
+	} 
+	void transform(float r, float i, float * rOut, float * iOut, float ts) {
+		float realPart = exp(r * ts);
+		float complexPart = realPart * sin(i * ts);
+		*rOut = realPart * cos(i * ts);
+		*iOut = complexPart;
+	}
+
+	void divideZ(float rNum, float iNum, float rDem, float iDem, float * rOut, float * iOut) {
+		float denominator = complexMagnitude(rDem, iDem);
+		*rOut = (rNum * rDem + iNum * iDem)/denominator;
+		*iOut = (iNum * rDem - rNum - iDem)/denominator;
+	}
+
+	//
+	// input filter
+	//
+
+	int numRealIn;
+	T * realStatesIn;
+	T * realPolesIn;
+	T * realResiduesIn;
+
+	int numConjIn;
+	T * zStates1In;
+	T * zStates2In;
+	T * zA0In;
+	T * zA1In;
+	T * zpArgIn;
+	T * zpAbsIn;
+	T * zrArgIn;
+	T * zBetasIn;
+
+	//
+	// input filter
+	//
+
+	void initInputFilter(int realSections, float * realResidues, float * realPoles,
+							int conjSections, float * conjRResidues, float * conjIResidues, 
+								float * conjRPoles, float * conjIPoles) {
+
+		numRealIn = realSections;
+		numConjIn = conjSections;
+
+		realStatesIn = (T*) malloc(realSections * sizeof(T));
+		realPolesIn = (T*) malloc(realSections * sizeof(T));
+		realResiduesIn = (T*) malloc(realSections * sizeof(T));
+
+		for (int i = 0; i < realSections; i++) {
+			realStatesIn[i] = T(0);
+			realPolesIn[i] = T(exp(realPoles[i] * hostSampleTime));
+			realResiduesIn[i] = T(realResidues[i]);
+		}
+
+		zStates1In = (T*) malloc(conjSections * sizeof(T));
+		zStates2In = (T*) malloc(conjSections * sizeof(T));
+		zA0In = (T*) malloc(conjSections * sizeof(T));
+		zA1In = (T*) malloc(conjSections * sizeof(T));
+		zpArgIn = (T*) malloc(conjSections * sizeof(T));
+		zpAbsIn = (T*) malloc(conjSections * sizeof(T));
+		zrArgIn = (T*) malloc(conjSections * sizeof(T));
+		zBetasIn = (T*) malloc(conjSections * sizeof(T));
+
+
+		for (int i = 0; i < conjSections; i++) {
+
+			float laplacePoleR;
+			float laplacePoleI;
+
+			transform(conjRPoles[i], conjIPoles[i], laplacePoleR, laplacePoleI, hostSampleTime);
+			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
+			float pArg = complexAngle(laplacePoleR, laplacePoleI);
+
+			zStates1In[i] = T(0);
+			zStates2In[i] = T(0);
+			zA0In[i] = T(2 * cos(pArg));
+			zA1In[i] = T(-pAbs * pAbs);
+			zpArgIn[i] = T(pArg);
+			zpAbsIn[i] = T(pAbs);
+			zrArgIn[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
+			zBetasIn[i] = T(2 * hostSampleTime * complexMagnitude(conjRResidues[i], conjIResidues[i]));
+
+		}
+
+	}
+
+	void updateInputStateR(T input, int sectionIndex) {
+
+		realStatesIn[sectionIndex] = realPolesIn[sectionIndex] * realStatesIn[sectionIndex] + input;
+
+	}
+
+	void updateInputStateZ(T input, int sectionIndex) {
+
+		T state1 = zStates1In[sectionIndex];
+		T state2 = zStates1In[sectionIndex];
+		T x1 = input;
+		x1 += state1 * zA0In[sectionIndex];
+		x1 += state2 * zA1In[sectionIndex];
+		zStates2In[sectionIndex] = state1;
+		zStates1In[sectionIndex] = state2;
+
+	}
+
+	void processInputNative(float input) {
+
+		for (int i = 0; i < numRealIn; i++) {
+			updateInputStateR(input, i);
+		}
+
+		for (int i = 0; i < numConjIn; i++) {
+			updateInputStateZ(input, i);
+		}
+		
+	}
+
+	T calculateInputWeightR(float delay, int sectionIndex) {
+
+		return T(hostSampleTime * realResiduesIn[sectionIndex] * pow(realPolesIn[sectionIndex], delay));
+
+	}
+
+	T calculateInputWeightB0(float delay, int sectionIndex) {
+
+		return zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay) * cos(zrArgIn[sectionIndex] + delay * zpArgIn[sectionIndex]);
+
+	}
+
+	// consolidate with above to save a pow
+	T calculateInputWeightB1(float delay, int sectionIndex) {
+
+		return -zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay + 1) * cos(zrArgIn[sectionIndex] + (delay - 1) * zpArgIn[sectionIndex]);
+
+	}
+
+	T processInputBBD(float delay) {
+
+		T bbdIn = T(0);
+
+		for (int i = 0; i < numRealIn; i++) {
+			bbdIn += realStatesIn[i] * calculateInputWeightR(delay, i);
+		}
+
+		for (int i = 0; i < numConjIn; i++) {
+			bbdIn += zStates1In[i] * calculateInputWeightB0(delay, i);
+			bbdIn += zStates2In[i] * calculateInputWeightB1(delay, i);
+		}
+
+		return bbdIn;
+
+	}
+
+	//
+	// output filter
+	//
+
+	int numRealOut;
+	T * realStatesOut;
+	T * realMultirateSumOut;
+	T * realPolesOut;
+	T * realResiduesOut;
+
+	int numConjOut;
+	T * zStates1Out;
+	T * zStates2Out;
+	T * zMultirateSum1Out;
+	T * zMultirateSum2Out;
+	T * zA0Out;
+	T * zA1Out;
+	T * zpArgOut;
+	T * zpAbsOut;
+	T * zrArgOut;
+	T * zBetasOut;
+
+	void initOutputFilter(int realSections, float * realResidues, float * realPoles,
+							int conjSections, float * conjRResidues, float * conjIResidues, 
+								float * conjRPoles, float * conjIPoles) {
+
+		numRealOut = realSections;
+		numConjOut = conjSections;
+
+		realStatesOut = (T*) malloc(realSections * sizeof(T));
+		realMultirateSumOut = (T*) malloc(realSections * sizeof(T));
+		realPolesOut = (T*) malloc(realSections * sizeof(T));
+		realResiduesOut = (T*) malloc(realSections * sizeof(T));
+
+		for (int i = 0; i < realSections; i++) {
+			realStatesOut[i] = T(0);
+			realMultirateSumOut[i] = T(0);
+			realPolesOut[i] = T(exp(realPoles[i] * hostSampleTime));
+			realResiduesOut[i] = T(realResidues[i]/realPoles[i]);
+		}
+
+		zStates1Out = (T*) malloc(conjSections * sizeof(T));
+		zStates2Out = (T*) malloc(conjSections * sizeof(T));
+		zMultirateSum1Out = (T*) malloc(conjSections * sizeof(T));
+		zMultirateSum2Out = (T*) malloc(conjSections * sizeof(T));
+		zA0Out = (T*) malloc(conjSections * sizeof(T));
+		zA1Out = (T*) malloc(conjSections * sizeof(T));
+		zpArgOut = (T*) malloc(conjSections * sizeof(T));
+		zpAbsOut = (T*) malloc(conjSections * sizeof(T));
+		zrArgOut = (T*) malloc(conjSections * sizeof(T));
+		zBetasOut = (T*) malloc(conjSections * sizeof(T));
+
+
+		for (int i = 0; i < conjSections; i++) {
+
+			float laplacePoleR;
+			float laplacePoleI;
+
+			transform(conjRPoles[i], conjIPoles[i], &laplacePoleR, &laplacePoleI, hostSampleTime);
+			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
+			float pArg = complexAngle(laplacePoleR, laplacePoleI);
+
+			zStates1Out[i] = T(0);
+			zStates2Out[i] = T(0);
+			zMultirateSum1Out[i] = T(0);
+			zMultirateSum2Out[i] = T(0);
+			zStates2Out[i] = T(0);
+			zA0Out[i] = T(2 * cos(pArg));
+			zA1Out[i] = T(-pAbs * pAbs);
+			zpArgOut[i] = T(pArg);
+			zpAbsOut[i] = T(pAbs);
+			zrArgOut[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
+			float pRQuotientR;
+			float pRQuotientI;
+			divideZ(conjRResidues[i], conjIResidues[i], conjRPoles[i], conjIPoles[i], &pRQuotientR, &pRQuotientI); 
+			zBetasOut[i] = T(2 * complexMagnitude(pRQuotientR, pRQuotientI));
+
+		}
+
+	}
+
+	T updateOutputStateR(int sectionIndex) {
+
+		realStatesOut[sectionIndex] = realPolesOut[sectionIndex] * realStatesOut[sectionIndex] + realMultirateSumOut[sectionIndex];
+		realMultirateSumOut[sectionIndex] = T(0);
+		return realStatesOut[sectionIndex];
+
+	}
+
+	void updateOutputStateZ(int sectionIndex) {
+
+		T state1 = zStates1Out[sectionIndex];
+		T state2 = zStates2Out[sectionIndex];
+		T out = zMultirateSum1Out[sectionIndex] + state1;
+		state1 = zMultirateSum2Out[sectionIndex] + state2 + out * zA0Out[sectionIndex];
+		state2 = out * zA0Out[sectionIndex];
+		zStates1Out[sectionIndex] = state1;
+		zStates2Out[sectionIndex] = state2;
+		zMultirateSum1Out[sectionIndex] = T(0);
+		zMultirateSum2Out[sectionIndex] = T(0);
+		return out;
+
+	}
+
+	T processOutputNative(void) {
+
+		T output = T(0);
+
+		for (int i = 0; i < numRealOut; i++) {
+			output += updateOutputStateR(i);
+		}
+
+		for (int i = 0; i < numConjOut; i++) {
+			output += updateOutputStateZ(i);
+		}
+		
+	}
+
+	T calculateOutputWeightR(float delay, int sectionIndex) {
+
+		return T(hostSampleTime * realResiduesOut[sectionIndex] * pow(realPolesOut[sectionIndex], 1 - delay));
+
+	}
+
+	T calculateOutputWeightB0(float delay, int sectionIndex) {
+
+		return zBetasOut[sectionIndex] * pow(zpAbsOut[sectionIndex], 1 - delay) * cos(zrArgOut[sectionIndex] + (1 - delay) * zpArgOut[sectionIndex]);
+
+	}
+
+	// consolidate with above to save a pow
+	T calculateOutputWeightB1(float delay, int sectionIndex) {
+
+		return -zBetasOut[sectionIndex] * pow(zpAbsOut[sectionIndex], 2 - delay) * cos(zrArgOut[sectionIndex] - delay * zpArgOut[sectionIndex]);
+
+	}
+
+	void processOutputBBD(float input, float delay) {
+
+		for (int i = 0; i < numRealOut; i++) {
+			realMultirateSumOut[i] += input * calculateOutputWeightR(delay, i);
+		}
+
+		for (int i = 0; i < numConjOut; i++) {
+			zMultirateSum1Out[i] += input * calculateOutputWeightB0(delay, i);
+			zMultirateSum2Out[i] += input * calculateOutputWeightB1(delay, i);
+		}
+
+	}
+
+	T process(float input) {
+
+		// same rate test
+		for (int i = 0; i < 2; i++) {
+			if (i & 1) {
+				writeBBD(processInputBBD(0.f));
+			} else {
+				processOutputBBD(readBBDDelta(), 0.5f);
+			}
+		}
+
+		processInputNative(input);
+		return processOutputNative();
+
+	}
+
+};
+
