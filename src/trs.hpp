@@ -187,42 +187,17 @@ struct Delay {
 
 // from DAFX '18 Holters and Parker "Combined Model for a Bucket Brigade Device and its Input and Output Filters"
 
-template <typename T = float_4, int32_t SIZE = 256>
+template <typename T = float_4, int32_t SIZE = 512>
 struct BBD {
 
-	//
-	// delay line
-	//
-
-	T bbd[SIZE];
-	T lastOut;
-	int bbdWrite = 0;
-
-	void writeBBD(float input) {
-		bbd[bbdWrite] = input;
-		bbdWrite++;
-		bbdWrite -= (bbdWrite = SIZE) * SIZE;
-	}
-
-	T readBBD(void) {
-		return bbd[bbdWrite];
-	}
-
-	T readBBDDelta(void) {
-		T output = bbd[bbdWrite] - lastOut;
-		lastOut = bbdWrite;
-		return output;
-	}
-
-	float clockFreq;
-	float hostSampleTime;
+	/////////////// Filter stuff 
 
 	//
 	// coefficient precalculation helpers
 	//
 
 	float complexMagnitude(float r, float i) {
-		sqrt(r * r + i * i);
+		return sqrt(r * r + i * i);
 	}
 	float complexAngle(float r, float i) {
 		return atan2(r, i);
@@ -235,9 +210,9 @@ struct BBD {
 	}
 
 	void divideZ(float rNum, float iNum, float rDem, float iDem, float * rOut, float * iOut) {
-		float denominator = complexMagnitude(rDem, iDem);
+		float denominator = rDem * rDem + iDem * iDem; 
 		*rOut = (rNum * rDem + iNum * iDem)/denominator;
-		*iOut = (iNum * rDem - rNum - iDem)/denominator;
+		*iOut = (iNum * rDem - rNum * iDem)/denominator;
 	}
 
 	//
@@ -295,7 +270,7 @@ struct BBD {
 			float laplacePoleR;
 			float laplacePoleI;
 
-			transform(conjRPoles[i], conjIPoles[i], laplacePoleR, laplacePoleI, hostSampleTime);
+			transform(conjRPoles[i], conjIPoles[i], &laplacePoleR, &laplacePoleI, hostSampleTime);
 			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
 			float pArg = complexAngle(laplacePoleR, laplacePoleI);
 
@@ -330,18 +305,6 @@ struct BBD {
 
 	}
 
-	void processInputNative(float input) {
-
-		for (int i = 0; i < numRealIn; i++) {
-			updateInputStateR(input, i);
-		}
-
-		for (int i = 0; i < numConjIn; i++) {
-			updateInputStateZ(input, i);
-		}
-		
-	}
-
 	T calculateInputWeightR(float delay, int sectionIndex) {
 
 		return T(hostSampleTime * realResiduesIn[sectionIndex] * pow(realPolesIn[sectionIndex], delay));
@@ -361,22 +324,6 @@ struct BBD {
 
 	}
 
-	T processInputBBD(float delay) {
-
-		T bbdIn = T(0);
-
-		for (int i = 0; i < numRealIn; i++) {
-			bbdIn += realStatesIn[i] * calculateInputWeightR(delay, i);
-		}
-
-		for (int i = 0; i < numConjIn; i++) {
-			bbdIn += zStates1In[i] * calculateInputWeightB0(delay, i);
-			bbdIn += zStates2In[i] * calculateInputWeightB1(delay, i);
-		}
-
-		return bbdIn;
-
-	}
 
 	//
 	// output filter
@@ -444,9 +391,8 @@ struct BBD {
 			zStates2Out[i] = T(0);
 			zMultirateSum1Out[i] = T(0);
 			zMultirateSum2Out[i] = T(0);
-			zStates2Out[i] = T(0);
 			zA0Out[i] = T(2 * cos(pArg));
-			zA1Out[i] = T(-pAbs * pAbs);
+			zA1Out[i] = T(-(pAbs * pAbs));
 			zpArgOut[i] = T(pArg);
 			zpAbsOut[i] = T(pAbs);
 			zrArgOut[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
@@ -461,44 +407,23 @@ struct BBD {
 
 	T updateOutputStateR(int sectionIndex) {
 
-		realStatesOut[sectionIndex] = realPolesOut[sectionIndex] * realStatesOut[sectionIndex] + realMultirateSumOut[sectionIndex];
-		realMultirateSumOut[sectionIndex] = T(0);
+		realStatesOut[sectionIndex] = realPolesOut[sectionIndex] * realStatesOut[sectionIndex];
 		return realStatesOut[sectionIndex];
 
 	}
 
-	void updateOutputStateZ(int sectionIndex) {
+	T updateOutputStateZ(int sectionIndex) {
 
-		T state1 = zStates1Out[sectionIndex];
-		T state2 = zStates2Out[sectionIndex];
-		T out = zMultirateSum1Out[sectionIndex] + state1;
-		state1 = zMultirateSum2Out[sectionIndex] + state2 + out * zA0Out[sectionIndex];
-		state2 = out * zA0Out[sectionIndex];
-		zStates1Out[sectionIndex] = state1;
-		zStates2Out[sectionIndex] = state2;
-		zMultirateSum1Out[sectionIndex] = T(0);
-		zMultirateSum2Out[sectionIndex] = T(0);
+		T out = zStates1Out[sectionIndex];
+		zStates1Out[sectionIndex] = zStates2Out[sectionIndex] + out * zA0Out[sectionIndex];
+		zStates2Out[sectionIndex] = out * zA1Out[sectionIndex];
 		return out;
 
 	}
 
-	T processOutputNative(void) {
-
-		T output = T(0);
-
-		for (int i = 0; i < numRealOut; i++) {
-			output += updateOutputStateR(i);
-		}
-
-		for (int i = 0; i < numConjOut; i++) {
-			output += updateOutputStateZ(i);
-		}
-		
-	}
-
 	T calculateOutputWeightR(float delay, int sectionIndex) {
 
-		return T(hostSampleTime * realResiduesOut[sectionIndex] * pow(realPolesOut[sectionIndex], 1 - delay));
+		return T(realResiduesOut[sectionIndex] * pow(realPolesOut[sectionIndex], 1 - delay));
 
 	}
 
@@ -515,32 +440,161 @@ struct BBD {
 
 	}
 
-	void processOutputBBD(float input, float delay) {
+	// input process steps
+
+	T processInputBBD(float delay) {
+
+		T bbdIn = T(0);
+
+		for (int i = 0; i < numRealIn; i++) {
+			bbdIn += realStatesIn[i] * calculateInputWeightR(delay, i);
+		}
+
+		for (int i = 0; i < numConjIn; i++) {
+			bbdIn += zStates1In[i] * calculateInputWeightB0(delay, i);
+			bbdIn += zStates2In[i] * calculateInputWeightB1(delay, i);
+		}
+
+		return bbdIn;
+
+	}
+
+	void processInputNative(T input) {
+
+		for (int i = 0; i < numRealIn; i++) {
+			updateInputStateR(input, i);
+		}
+
+		for (int i = 0; i < numConjIn; i++) {
+			updateInputStateZ(input, i);
+		}
+		
+	}
+
+	// output process steps
+
+	void processOutputBBD(T input, float delay) {
 
 		for (int i = 0; i < numRealOut; i++) {
-			realMultirateSumOut[i] += input * calculateOutputWeightR(delay, i);
+			realStatesOut[i] += input * calculateOutputWeightR(delay, i);
 		}
 
 		for (int i = 0; i < numConjOut; i++) {
-			zMultirateSum1Out[i] += input * calculateOutputWeightB0(delay, i);
-			zMultirateSum2Out[i] += input * calculateOutputWeightB1(delay, i);
+			zStates1Out[i] += input * calculateOutputWeightB0(delay, i);
+			zStates2Out[i] += input * calculateOutputWeightB1(delay, i);
 		}
 
 	}
 
-	T process(float input) {
+	T processOutputNative(void) {
 
-		// same rate test
-		for (int i = 0; i < 2; i++) {
-			if (i & 1) {
-				writeBBD(processInputBBD(0.f));
-			} else {
-				processOutputBBD(readBBDDelta(), 0.5f);
-			}
+		T h0 = T(.5f);
+		T output = lastOut * h0;
+
+		for (int i = 0; i < numRealOut; i++) {
+			output += realStatesOut[i];
+			updateOutputStateR(i);
 		}
 
-		processInputNative(input);
+		for (int i = 0; i < numConjOut; i++) {
+			output += zStates1Out[i];
+			updateOutputStateZ(i);
+		}
+
+		return output;
+		
+	}
+
+	//
+	// delay line
+	//
+
+	T bbd[SIZE];
+	T lastOut = T(0);
+	int bbdWrite = 0;
+
+	void writeBBD(T input) {
+		bbd[bbdWrite] = input;
+		bbdWrite++;
+		bbdWrite = (bbdWrite >= SIZE) ? 0 : bbdWrite;
+	}
+
+	T readBBD(void) {
+		return bbd[bbdWrite];
+	}
+
+	T readBBDDelta(void) {
+		T output = bbd[bbdWrite] - lastOut;
+		lastOut = bbd[bbdWrite];
+		return output;
+	}
+
+	float clockFreq = .5;
+	float hostSampleTime = 1.f / 44100.f;
+	float nativeTimeIndex = 0;
+	float bbdTimeIndex = 0;
+
+	// maintain the bucket brigade at the variable sample rate and the filter states at the main sample rate
+
+	T process(T input) {
+
+		// same rate test
+		// for (int i = 0; i < 2; i++) {
+		// 	if (i & 1) {
+		// 		writeBBD(processInputBBD(0.f));
+		// 	} else {
+		// 		processOutputBBD(readBBDDelta(), 0.5f);
+		// 	}
+		// }
+
+		// processInputNative(input);
+		// return processOutputNative();
+
+		writeBBD(processInputBBD(0));
+		processOutputBBD(readBBDDelta(), 0);
+		processInputNative(input / 8.47f);
 		return processOutputNative();
+
+	}
+
+	//
+	// Juno filter pair analysis from the paper
+	//
+
+	#define _DEFAULT_REAL_SECTIONS 1
+	#define _DEFAULT_CONJ_SECTIONS 2
+
+	float rInRDefault[_DEFAULT_REAL_SECTIONS] = {251589.f};
+	float rInPDefault[_DEFAULT_REAL_SECTIONS] = {-46580.f};
+
+	float zRInRDefault[_DEFAULT_CONJ_SECTIONS] = {-130428.f, 4634.f};
+	float zRInPDefault[_DEFAULT_CONJ_SECTIONS] = {-55482.f, -26292.f};
+
+	float zIInRDefault[_DEFAULT_CONJ_SECTIONS] = {-4165.f, -22873.f};
+	float zIInPDefault[_DEFAULT_CONJ_SECTIONS] = {25082.f, -59437.f};
+
+	float rOutRDefault[_DEFAULT_REAL_SECTIONS] = {5092.f};
+	float rOutPDefault[_DEFAULT_REAL_SECTIONS] = {-176261.f};
+
+	float zROutRDefault[_DEFAULT_CONJ_SECTIONS] = {11256.f, -13802.f};
+	float zROutPDefault[_DEFAULT_CONJ_SECTIONS] = {-51468.f, -26276.f};
+
+	float zIOutRDefault[_DEFAULT_CONJ_SECTIONS] = {-99566.f, -24606.f};
+	float zIOutPDefault[_DEFAULT_CONJ_SECTIONS] = {21437.f, -59699.f};
+
+	BBD() {
+
+		initInputFilter(_DEFAULT_REAL_SECTIONS, rInRDefault, rInPDefault,
+							_DEFAULT_CONJ_SECTIONS, zRInRDefault, zIInRDefault, 
+								zRInPDefault, zIInPDefault);
+
+		initOutputFilter(_DEFAULT_REAL_SECTIONS, rOutRDefault, rOutPDefault,
+							_DEFAULT_CONJ_SECTIONS, zROutRDefault, zIOutRDefault, 
+								zROutPDefault, zIOutPDefault);
+
+		for (int i = 0; i < SIZE; i++) {
+			bbd[i] = T(0);
+		}
 
 	}
 

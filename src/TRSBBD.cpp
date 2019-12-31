@@ -23,6 +23,8 @@ struct TRSBBD : Module {
 
     Delay<float_4> delays[2][2];
 
+    BBD<float_4> bbds[2][2];
+
     StereoInHandler fbIn;
     StereoInHandler timeIn;
     StereoInHandler signalIn;
@@ -52,26 +54,30 @@ struct TRSBBD : Module {
 
     void process(const ProcessArgs &args) override {
 
-        outputs[SIGNAL_OUTPUT].setChannels(16);
+        float_4 input = inputs[SIGNAL_INPUT].getVoltageSimd<float_4>(0);
 
-        for (int polyChunk = 0; polyChunk < 2; polyChunk ++) {
+        outputs[SIGNAL_OUTPUT].setVoltageSimd<float_4>(bbds[0][0].process(input), 0);
 
-            float ms = 0.03f + params[TIME_PARAM].getValue() * 50.f;
-            // no poly rate CV yet (hard to vectorize), temporary hardcoded mono channel for l (0) and r (8)
-            float_4 leftTap = delays[0][polyChunk].readLinear(ms + clamp(inputs[TIME_INPUT].getVoltage(0), 0.f, 5.f) * 10.f);
-            float_4 rightTap = delays[1][polyChunk].readLinear(ms + clamp(inputs[TIME_INPUT].getVoltage(8), 0.f, 5.f) * 10.f);
+        // outputs[SIGNAL_OUTPUT].setChannels(16);
 
-            float_4 fbL = clamp(float_4(params[FEEDBACK_PARAM].getValue()) + fbIn.getLeft(polyChunk) / float_4(5.f), 0.f, 0.99f);
-            float_4 fbR = clamp(float_4(params[FEEDBACK_PARAM].getValue()) + fbIn.getLeft(polyChunk) / float_4(5.f), 0.f, 0.99f);
+        // for (int polyChunk = 0; polyChunk < 2; polyChunk ++) {
 
-            // add dc blockaz
-            delays[0][polyChunk].writeDCBlock(signalIn.getLeft(polyChunk) + leftTap * fbL);
-            delays[1][polyChunk].writeDCBlock(signalIn.getRight(polyChunk) + rightTap * fbR);
+        //     float ms = 0.03f + params[TIME_PARAM].getValue() * 50.f;
+        //     // no poly rate CV yet (hard to vectorize), temporary hardcoded mono channel for l (0) and r (8)
+        //     float_4 leftTap = delays[0][polyChunk].readLinear(ms + clamp(inputs[TIME_INPUT].getVoltage(0), 0.f, 5.f) * 10.f);
+        //     float_4 rightTap = delays[1][polyChunk].readLinear(ms + clamp(inputs[TIME_INPUT].getVoltage(8), 0.f, 5.f) * 10.f);
 
-            signalOut.setLeft(leftTap, polyChunk);
-            signalOut.setRight(rightTap, polyChunk);
+        //     float_4 fbL = clamp(float_4(params[FEEDBACK_PARAM].getValue()) + fbIn.getLeft(polyChunk) / float_4(5.f), 0.f, 0.99f);
+        //     float_4 fbR = clamp(float_4(params[FEEDBACK_PARAM].getValue()) + fbIn.getLeft(polyChunk) / float_4(5.f), 0.f, 0.99f);
 
-        }
+        //     // add dc blockaz
+        //     delays[0][polyChunk].writeDCBlock(signalIn.getLeft(polyChunk) + leftTap * fbL);
+        //     delays[1][polyChunk].writeDCBlock(signalIn.getRight(polyChunk) + rightTap * fbR);
+
+        //     signalOut.setLeft(leftTap, polyChunk);
+        //     signalOut.setRight(rightTap, polyChunk);
+
+        // }
 
     }
 
