@@ -25,6 +25,8 @@ struct TRSBBD : Module {
 
     BBD<float_4> bbds[2][2];
 
+    float sr = 44100.f;
+
     StereoInHandler fbIn;
     StereoInHandler timeIn;
     StereoInHandler signalIn;
@@ -54,9 +56,27 @@ struct TRSBBD : Module {
 
     void process(const ProcessArgs &args) override {
 
-        float_4 input = inputs[SIGNAL_INPUT].getVoltageSimd<float_4>(0);
+        outputs[SIGNAL_OUTPUT].setChannels(16);
 
-        outputs[SIGNAL_OUTPUT].setVoltageSimd<float_4>(bbds[0][0].process(input), 0);
+        float timeCV = timeIn.getLeft();
+        timeCV += 5.f;
+        timeCV /= 10.f;
+        timeCV = clamp(timeCV, 0.f, 1.f);
+        timeCV += params[TIME_PARAM].getValue();
+        timeCV *= 400000.f;
+        timeCV += 14000.f;
+
+        signalOut.setLeft(bbds[0][0].process(signalIn.getLeft(), timeCV), 0);
+
+        timeCV = timeIn.getRight();
+        timeCV += 5.f;
+        timeCV /= 10.f;
+        timeCV = clamp(timeCV, 0.f, 1.f);
+        timeCV += params[TIME_PARAM].getValue();
+        timeCV *= 400000.f;
+        timeCV += 14000.f;
+
+        signalOut.setRight(bbds[0][1].process(signalIn.getRight(), timeCV), 0);
 
         // outputs[SIGNAL_OUTPUT].setChannels(16);
 
@@ -83,12 +103,12 @@ struct TRSBBD : Module {
 
     void onSampleRateChange() override {
         
-        float sampleRate = APP->engine->getSampleRate();
+        sr = APP->engine->getSampleRate();
 
-        delays[0][0].changeSR(sampleRate);
-        delays[0][1].changeSR(sampleRate);
-        delays[1][0].changeSR(sampleRate);
-        delays[1][1].changeSR(sampleRate);
+        bbds[0][0].changeSR(sr);
+        bbds[0][1].changeSR(sr);
+        bbds[1][0].changeSR(sr);
+        bbds[1][1].changeSR(sr);
 
     }
 

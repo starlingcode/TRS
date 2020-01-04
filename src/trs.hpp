@@ -1,5 +1,7 @@
 #include "plugin.hpp"
 #include "ui.hpp"
+#include "matrix/math.hpp"
+
 
 using simd::float_4;
 
@@ -82,9 +84,227 @@ struct AP1 {
 
 };
 
-// Chamberlin SVF
+// Naive impementation
+// shoving the delay in the feedback path makes this unstable
+template <typename T = float>
+struct fourPolePhaser {
 
-// needs the diodes
+    AP1<T> stage1;
+    AP1<T> stage2;
+    AP1<T> stage3;
+    AP1<T> stage4;
+
+    T feedback = T(0);
+
+    fourPolePhaser() {}
+
+    void setParams(T freq, T fb) {
+        stage1.a0 = freq;
+        stage2.a0 = freq;
+        stage3.a0 = freq;
+        stage4.a0 = freq;
+        feedback = fb;
+    }
+
+    T process(T input) {
+        T signal = stage1.process(input + feedback * -stage4.d2);
+        signal = stage2.process(signal);
+        signal = stage3.process(signal);
+        signal = stage4.process(signal);
+        return signal;
+    }
+
+};
+
+// state space 4 pole filter cooked up from https://github.com/google/music-synthesizer-for-android/blob/master/lab/Zero%20delay%20the%20easy%20way.ipynb
+// aka "Zero delay the easy way"
+// float only no vectors
+
+struct ZDFPhaser4 {
+
+	// analog state space prototype
+	// extended from first order section
+	// ap = lp - hp = lp - (in - lp) = 2*lp - in
+	// A = [-1], B = [1], C = [2], D = [-1]
+
+	float A[16] = {-1, 0, 0, 0,
+              	    2, -1, 0, 0,
+              	   -2, 2, -1, 0,
+              	    2, -2, 2, -1};
+	float B[4] = {1, -1, 1, -1};
+	float C[4] = {-2, 2, -2, 2};
+	float D = 1;
+
+	float Az[16] = {-1, 0, 0, 0,
+              	     2, -1, 0, 0,
+              	    -2, 2, -1, 0,
+              	     2, -2, 2, -1};
+	float Bz[4] = {1, -1, 1, -1};
+	float Cz[4] = {-2, 2, -2, 2};
+	float Dz = 1;
+
+	float X[4] = {0, 0, 0, 0};
+
+	// discretize with bilinear transform
+
+	void setParams(float freq, float res) {
+
+		// freq normalized to sr
+		// prewarp for bilinear transform
+		float g = tan(M_PI * freq);
+		// printf("g: %4.4f \n", g);
+
+		// sneak in the feedback gain as res 0 - 1
+		A[3] = -res;
+
+		// Inv = (I - gA)^(-1)
+		// Inverting the transition matrix solves the system of differential equations
+		matrix::SquareMatrix<float, 4> Ag(A);
+		Ag *= g;
+		matrix::SquareMatrix<float, 4> Inv;
+    	Inv.setIdentity();
+    	Inv -= Ag;
+    	Inv = matrix::inv(Inv);
+
+    	// discretize the transition matrix
+    	// Az = Inv * (I + gA)
+    	matrix::SquareMatrix<float, 4> A_;
+    	A_.setIdentity();
+    	A_ += Ag;
+    	A_ = Inv * A_;
+
+    	// discretize the input vector (column)
+    	// Bz = 2g * Inv * B
+    	matrix::Vector<float, 4> Bs(B);
+    	matrix::Vector<float, 4> B_;
+    	B_ = 2 * g * Inv * Bs;
+
+    	// discretize the output vector (row)
+    	// Cz = C * Inv
+    	matrix::Matrix<float, 1, 4> C_;
+    	matrix::Vector<float, 4> Cs(C);
+    	C_ = Cs.T() * Inv;
+
+    	// Calculate the direct input feedthrough
+    	// Prototype D is added when storing
+    	// Dz = g * C * Inv * B + D
+    	matrix::Matrix<float, 1, 1> D_;
+    	D_ = Cs.T() * Inv * (g * Bs);
+    	
+    	// store above calculations 
+    	A_.copyTo(Az);
+    	B_.copyTo(Bz);
+    	C_.copyTo(Cz);
+    	Dz = D_(0, 0) + D;
+
+	}
+
+	float process(float in) {
+
+		// calculate output from current state and current input 
+		matrix::Vector<float, 4> X_(X);
+		matrix::Vector<float, 4> C_(Cz);
+		float out = in * Dz + X_.dot(C_);
+
+		// update the state for the next input from current input and transition matrix
+		matrix::SquareMatrix<float, 4> A_(Az);
+		matrix::Vector<float, 4> B_(Bz);
+		X_ = A_ * X_ + in * B_;
+		// store it
+		X_.copyTo(X);
+
+		// return the output from the first section		
+		return out;
+
+	}
+
+};
+
+// same thing, 8 pole prototype
+
+struct ZDFPhaser8 {
+
+	float A[64] = {-1, 0, 0, 0, 0, 0, 0, 0,
+              		2, -1, 0, 0, 0, 0, 0, 0,
+              		-2, 2, -1, 0, 0, 0, 0, 0,
+              		2, -2, 2, -1, 0, 0, 0, 0,
+              		-2, 2, -2, 2, -1, 0, 0, 0,
+              		2, -2, 2, -2, 2, -1, 0, 0,
+              		-2, 2, -2, 2, -2, 2, -1, 0,
+              		2, -2, 2, -2, 2, -2, 2, -1};
+	float B[8] = {1, -1, 1, -1, 1, -1, 1, -1};
+	float C[8] = {-2, 2, -2, 2, -2, 2, -2, 2};
+	float D = 1;
+
+	float Az[64] = {-1, 0, 0, 0, 0, 0, 0, 0,
+              		2, -1, 0, 0, 0, 0, 0, 0,
+              		-2, 2, -1, 0, 0, 0, 0, 0,
+              		2, -2, 2, -1, 0, 0, 0, 0,
+              		-2, 2, -2, 2, -1, 0, 0, 0,
+              		2, -2, 2, -2, 2, -1, 0, 0,
+              		-2, 2, -2, 2, -2, 2, -1, 0,
+              		2, -2, 2, -2, 2, -2, 2, -1};
+	float Bz[8] = {1, -1, 1, -1};
+	float Cz[8] = {-2, 2, -2, 2};
+	float Dz = 1;
+
+	float X[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+
+	void setParams(float freq, float res) {
+
+		float g = tan(M_PI * freq);
+
+		A[7] = -res;
+
+		matrix::SquareMatrix<float, 8> Ag(A);
+		Ag *= g;
+		matrix::SquareMatrix<float, 8> Inv;
+    	Inv.setIdentity();
+    	Inv -= Ag;
+    	Inv = matrix::inv(Inv);
+
+    	matrix::SquareMatrix<float, 8> A_;
+    	A_.setIdentity();
+    	A_ += Ag;
+    	A_ = Inv * A_;
+
+    	matrix::Vector<float, 8> Bs(B);
+    	matrix::Vector<float, 8> B_;
+    	B_ = 2 * g * Inv * Bs;
+
+    	matrix::Matrix<float, 1, 8> C_;
+    	matrix::Vector<float, 8> Cs(C);
+    	C_ = Cs.T() * Inv;
+
+    	matrix::Matrix<float, 1, 1> D_;
+    	D_ = Cs.T() * Inv * (g * Bs);
+
+    	A_.copyTo(Az);
+    	B_.copyTo(Bz);
+    	C_.copyTo(Cz);
+    	Dz = D_(0, 0) + D;
+
+	}
+
+	float process(float in) {
+
+		matrix::Vector<float, 8> X_(X);
+		matrix::Vector<float, 8> C_(Cz);
+		float out = in * Dz + X_.dot(C_);
+		matrix::SquareMatrix<float, 8> A_(Az);
+		matrix::Vector<float, 8> B_(Bz);
+		X_ = A_ * X_ + in * B_;
+		X_.copyTo(X);		
+		return out;
+
+	}
+
+};
+
+// Chamberlin SVF
+// Classic JOS version, unstable above ~ sr/6
+
 template <typename T = float>
 struct JOSSVF {
 
@@ -187,11 +407,12 @@ struct Delay {
 
 // from DAFX '18 Holters and Parker "Combined Model for a Bucket Brigade Device and its Input and Output Filters"
 
-template <typename T = float_4, int32_t SIZE = 512>
+template <typename T = float_4, int32_t SIZE = 256>
 struct BBD {
 
 	/////////////// Filter stuff 
 
+	
 	//
 	// coefficient precalculation helpers
 	//
@@ -200,7 +421,7 @@ struct BBD {
 		return sqrt(r * r + i * i);
 	}
 	float complexAngle(float r, float i) {
-		return atan2(r, i);
+		return atan2(i, r);
 	} 
 	void transform(float r, float i, float * rOut, float * iOut, float ts) {
 		float realPart = exp(r * ts);
@@ -215,8 +436,9 @@ struct BBD {
 		*iOut = (iNum * rDem - rNum * iDem)/denominator;
 	}
 
+
 	//
-	// input filter
+	// input filter init
 	//
 
 	int numRealIn;
@@ -227,16 +449,13 @@ struct BBD {
 	int numConjIn;
 	T * zStates1In;
 	T * zStates2In;
+	T * zStates3In;
 	T * zA0In;
 	T * zA1In;
 	T * zpArgIn;
 	T * zpAbsIn;
 	T * zrArgIn;
 	T * zBetasIn;
-
-	//
-	// input filter
-	//
 
 	void initInputFilter(int realSections, float * realResidues, float * realPoles,
 							int conjSections, float * conjRResidues, float * conjIResidues, 
@@ -257,6 +476,7 @@ struct BBD {
 
 		zStates1In = (T*) malloc(conjSections * sizeof(T));
 		zStates2In = (T*) malloc(conjSections * sizeof(T));
+		zStates3In = (T*) malloc(conjSections * sizeof(T));
 		zA0In = (T*) malloc(conjSections * sizeof(T));
 		zA1In = (T*) malloc(conjSections * sizeof(T));
 		zpArgIn = (T*) malloc(conjSections * sizeof(T));
@@ -271,11 +491,15 @@ struct BBD {
 			float laplacePoleI;
 
 			transform(conjRPoles[i], conjIPoles[i], &laplacePoleR, &laplacePoleI, hostSampleTime);
+			if (laplacePoleR > 0) {
+				laplacePoleR *= -1;
+			}
 			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
 			float pArg = complexAngle(laplacePoleR, laplacePoleI);
 
 			zStates1In[i] = T(0);
 			zStates2In[i] = T(0);
+			zStates3In[i] = T(0);
 			zA0In[i] = T(2 * cos(pArg));
 			zA1In[i] = T(-pAbs * pAbs);
 			zpArgIn[i] = T(pArg);
@@ -287,46 +511,9 @@ struct BBD {
 
 	}
 
-	void updateInputStateR(T input, int sectionIndex) {
-
-		realStatesIn[sectionIndex] = realPolesIn[sectionIndex] * realStatesIn[sectionIndex] + input;
-
-	}
-
-	void updateInputStateZ(T input, int sectionIndex) {
-
-		T state1 = zStates1In[sectionIndex];
-		T state2 = zStates1In[sectionIndex];
-		T x1 = input;
-		x1 += state1 * zA0In[sectionIndex];
-		x1 += state2 * zA1In[sectionIndex];
-		zStates2In[sectionIndex] = state1;
-		zStates1In[sectionIndex] = state2;
-
-	}
-
-	T calculateInputWeightR(float delay, int sectionIndex) {
-
-		return T(hostSampleTime * realResiduesIn[sectionIndex] * pow(realPolesIn[sectionIndex], delay));
-
-	}
-
-	T calculateInputWeightB0(float delay, int sectionIndex) {
-
-		return zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay) * cos(zrArgIn[sectionIndex] + delay * zpArgIn[sectionIndex]);
-
-	}
-
-	// consolidate with above to save a pow
-	T calculateInputWeightB1(float delay, int sectionIndex) {
-
-		return -zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay + 1) * cos(zrArgIn[sectionIndex] + (delay - 1) * zpArgIn[sectionIndex]);
-
-	}
-
-
+	
 	//
-	// output filter
+	// output filter init
 	//
 
 	int numRealOut;
@@ -346,6 +533,7 @@ struct BBD {
 	T * zpAbsOut;
 	T * zrArgOut;
 	T * zBetasOut;
+	T H0 = 0;
 
 	void initOutputFilter(int realSections, float * realResidues, float * realPoles,
 							int conjSections, float * conjRResidues, float * conjIResidues, 
@@ -364,6 +552,7 @@ struct BBD {
 			realMultirateSumOut[i] = T(0);
 			realPolesOut[i] = T(exp(realPoles[i] * hostSampleTime));
 			realResiduesOut[i] = T(realResidues[i]/realPoles[i]);
+			H0 += T(realResidues[i]/realPoles[i]);
 		}
 
 		zStates1Out = (T*) malloc(conjSections * sizeof(T));
@@ -387,23 +576,79 @@ struct BBD {
 			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
 			float pArg = complexAngle(laplacePoleR, laplacePoleI);
 
+			printf("laplacePoleR section %d: %4.4f \n", i, laplacePoleR);
+			printf("laplacePoleI section %d: %4.4f \n", i, laplacePoleI);
+			printf("pAbs section %d: %4.4f \n", i, pAbs);
+			printf("pArg section %d: %4.4f \n", i, pArg);
+			printf("A0 section %d: %4.4f \n", i, 2 * cos(pArg));
+
 			zStates1Out[i] = T(0);
 			zStates2Out[i] = T(0);
 			zMultirateSum1Out[i] = T(0);
 			zMultirateSum2Out[i] = T(0);
 			zA0Out[i] = T(2 * cos(pArg));
-			zA1Out[i] = T(-(pAbs * pAbs));
+			zA1Out[i] = T(-pAbs * pAbs);
 			zpArgOut[i] = T(pArg);
 			zpAbsOut[i] = T(pAbs);
 			zrArgOut[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
 			float pRQuotientR;
 			float pRQuotientI;
 			divideZ(conjRResidues[i], conjIResidues[i], conjRPoles[i], conjIPoles[i], &pRQuotientR, &pRQuotientI); 
+			printf("pRQuotientR section %d: %4.4f \n", i, pRQuotientR);
+			printf("pRQuotientI section %d: %4.4f \n", i, pRQuotientI);
 			zBetasOut[i] = T(2 * complexMagnitude(pRQuotientR, pRQuotientI));
+			printf("zBetasOut section %d: %4.4f \n", i, zBetasOut[i][0]);
+			H0 += pRQuotientR;
+
 
 		}
 
 	}
+
+	
+	//
+	// input filter helpers
+	//
+
+	void updateInputStateR(T input, int sectionIndex) {
+
+		realStatesIn[sectionIndex] = realPolesIn[sectionIndex] * realStatesIn[sectionIndex] + input;
+
+	}
+
+	void updateInputStateZ(T input, int sectionIndex) {
+
+		T x1 = input;
+		x1 += zStates1In[sectionIndex] * zA0In[sectionIndex];
+		x1 += zStates2In[sectionIndex] * zA1In[sectionIndex];
+		zStates2In[sectionIndex] = zStates1In[sectionIndex];
+		zStates1In[sectionIndex] = x1;
+
+	}
+
+	T calculateInputWeightR(float delay, int sectionIndex) {
+
+		return T(hostSampleTime * realResiduesIn[sectionIndex] * pow(realPolesIn[sectionIndex], delay));
+
+	}
+
+	T calculateInputWeightB0(float delay, int sectionIndex) {
+
+		return zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay) * cos(zrArgIn[sectionIndex] + delay * zpArgIn[sectionIndex]);
+
+	}
+
+	// consolidate with above to save a pow
+	T calculateInputWeightB1(float delay, int sectionIndex) {
+
+		return -zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay + 1) * cos(zrArgIn[sectionIndex] + (delay - 1) * zpArgIn[sectionIndex]);
+
+	}
+
+	
+	//
+	// output filter helpers
+	//
 
 	T updateOutputStateR(int sectionIndex) {
 
@@ -440,7 +685,10 @@ struct BBD {
 
 	}
 
+	
+	//
 	// input process steps
+	//
 
 	T processInputBBD(float delay) {
 
@@ -471,7 +719,10 @@ struct BBD {
 		
 	}
 
+	
+	//
 	// output process steps
+	//
 
 	void processOutputBBD(T input, float delay) {
 
@@ -480,31 +731,33 @@ struct BBD {
 		}
 
 		for (int i = 0; i < numConjOut; i++) {
-			zStates1Out[i] += input * calculateOutputWeightB0(delay, i);
-			zStates2Out[i] += input * calculateOutputWeightB1(delay, i);
+			T b0 = calculateOutputWeightB0(delay, i);
+			T b1 = calculateOutputWeightB1(delay, i);
+			zStates1Out[i] += input * b0;
+			zStates2Out[i] += input * b1;
 		}
 
 	}
 
 	T processOutputNative(void) {
 
-		T h0 = T(.5f);
-		T output = lastOut * h0;
+		T output = lastOut * H0;
 
 		for (int i = 0; i < numRealOut; i++) {
 			output += realStatesOut[i];
 			updateOutputStateR(i);
 		}
 
-		for (int i = 0; i < numConjOut; i++) {
-			output += zStates1Out[i];
-			updateOutputStateZ(i);
-		}
+		// for (int i = 0; i < numConjOut; i++) {
+		// 	output += zStates1Out[i];
+		// 	updateOutputStateZ(i);
+		// }
 
 		return output;
 		
 	}
 
+	
 	//
 	// delay line
 	//
@@ -529,30 +782,47 @@ struct BBD {
 		return output;
 	}
 
-	float clockFreq = .5;
+	void changeSR(float sr) {
+
+	}
+
 	float hostSampleTime = 1.f / 44100.f;
 	float nativeTimeIndex = 0;
 	float bbdTimeIndex = 0;
+	int32_t bbdStepTracker = 0; 
 
 	// maintain the bucket brigade at the variable sample rate and the filter states at the main sample rate
 
-	T process(T input) {
+	T process(T input, float clockFreq) {
 
-		// same rate test
-		// for (int i = 0; i < 2; i++) {
-		// 	if (i & 1) {
-		// 		writeBBD(processInputBBD(0.f));
-		// 	} else {
-		// 		processOutputBBD(readBBDDelta(), 0.5f);
-		// 	}
-		// }
+		float bbdStep = 1/(clockFreq * hostSampleTime);
 
-		// processInputNative(input);
-		// return processOutputNative();
+		nativeTimeIndex ++;
 
-		writeBBD(processInputBBD(0));
-		processOutputBBD(readBBDDelta(), 0);
-		processInputNative(input / 8.47f);
+		while (bbdTimeIndex < nativeTimeIndex) {
+
+			float delay = bbdTimeIndex - (nativeTimeIndex - 1);
+			// delay = 1 - delay;
+
+			if (bbdStepTracker & 1) {
+				// even steps
+				writeBBD(processInputBBD(delay));
+			} else {
+				// odd steps
+				processOutputBBD(readBBDDelta(), delay);
+			}
+			
+			bbdStepTracker++;
+			bbdTimeIndex += bbdStep;
+
+		}
+
+		if (nativeTimeIndex >= 1000) {
+			bbdTimeIndex -= 1000;
+			nativeTimeIndex -= 1000;
+		}
+
+		processInputNative(input);
 		return processOutputNative();
 
 	}

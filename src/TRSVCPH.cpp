@@ -1,35 +1,5 @@
 #include "trs.hpp"
 
-// shoving the delay in the feedback path makes this unstable
-template <typename T = float>
-struct fourPolePhaser {
-
-    AP1<T> stage1;
-    AP1<T> stage2;
-    AP1<T> stage3;
-    AP1<T> stage4;
-
-    T feedback = T(0);
-
-    fourPolePhaser() {}
-
-    void setParams(T freq, T fb) {
-        stage1.a0 = freq;
-        stage2.a0 = freq;
-        stage3.a0 = freq;
-        stage4.a0 = freq;
-        feedback = fb;
-    }
-
-    T process(T input) {
-        T signal = stage1.process(input + feedback * -stage4.d2);
-        signal = stage2.process(signal);
-        signal = stage3.process(signal);
-        signal = stage4.process(signal);
-        return signal;
-    }
-
-};
 
 struct TRSVCPH : Module {
     enum ParamIds {
@@ -58,12 +28,16 @@ struct TRSVCPH : Module {
     StereoOutHandler wet;
     StereoOutHandler mix;
 
-    fourPolePhaser<float_4> phasers[2][2];
+    // fourPolePhaser<float_4> phasers[2][2];
+    ZDFPhaser8 phasers8[2];
+    ZDFPhaser4 phasers4[2];
+
+    int use8Pole = 0;
 
     TRSVCPH() {
 
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(FB_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(FB_PARAM, 0.f, .5f, 0.f, "");
         configParam(MIX_PARAM, 0.f, 1.f, 0.f, "");
         configParam(CVAMT_PARAM, 0.f, 1.f, 0.f, "");
 
@@ -77,34 +51,46 @@ struct TRSVCPH : Module {
 
     void process(const ProcessArgs &args) override {
 
+        float Ts = APP->engine->getSampleTime();
+
         outputs[WET_OUTPUT].setChannels(16);
         outputs[MIX_OUTPUT].setChannels(16);
 
-        for (int polyChunk = 0; polyChunk < 2; polyChunk++) {
+        float inL = in.getLeft();
+        float inR = in.getRight();
 
-            float_4 inL = in.getLeft(polyChunk);
-            float_4 inR = in.getRight(polyChunk);
+        float fb = params[FB_PARAM].getValue();
+        float cvDepth = params[CVAMT_PARAM].getValue();
 
-            float_4 fb = float_4(params[FB_PARAM].getValue());
-            float_4 cvDepth = float_4(params[CVAMT_PARAM].getValue());
-
-            float_4 freq = clamp(cv.getLeft(polyChunk)/float_4(5.f) * cvDepth, float_4(-1.f), float_4(1.f));
-            phasers[0][polyChunk].setParams(freq, fb);
-            float_4 phasedL = phasers[0][polyChunk].process(inL);
-
-            freq = clamp(cv.getRight(polyChunk)/float_4(5.f) * cvDepth, float_4(-.99f), float_4(.99f));
-            phasers[1][polyChunk].setParams(freq, fb);
-            float_4 phasedR = phasers[1][polyChunk].process(inR);
-
-            wet.setLeft(phasedL, polyChunk);
-            wet.setRight(phasedR, polyChunk);
-
-            float_4 mixAmount = float_4(params[MIX_PARAM].getValue());
-
-            mix.setLeft(phasedL + inL * mixAmount, polyChunk);
-            mix.setRight(phasedR + inR * mixAmount, polyChunk);
-
+        float freq = clamp((cv.getLeft() * cvDepth), -5.f, 5.f);
+        freq = 480.f * pow(2, freq) * Ts;
+        float phasedL = 0;
+        if (use8Pole) {
+            phasers8[0].setParams(freq, fb);
+            phasedL = phasers8[0].process(inL);
+        } else {
+            phasers4[0].setParams(freq, fb);
+            phasedL = phasers4[0].process(inL);
         }
+
+        freq = clamp((cv.getRight() * cvDepth), -5.f, 5.f);
+        freq = 480.f * pow(2, freq) * Ts;
+        float phasedR = 0;
+        if (use8Pole) {
+            phasers8[1].setParams(freq, fb);
+            phasedR = phasers8[1].process(inL);
+        } else {
+            phasers4[1].setParams(freq, fb);
+            phasedR = phasers4[1].process(inL);
+        }
+
+        wet.setLeft(phasedL);
+        wet.setRight(phasedR);
+
+        float mixAmount = params[MIX_PARAM].getValue();
+
+        mix.setLeft(phasedL + inL * mixAmount);
+        mix.setRight(phasedR + inR * mixAmount);
 
     }
 };
@@ -130,6 +116,44 @@ struct TRSVCPHWidget : ModuleWidget {
         addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.952, 113.523)), module, TRSVCPH::WET_OUTPUT));
         addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.777, 113.523)), module, TRSVCPH::MIX_OUTPUT));
     }
+
+    void appendContextMenu(Menu *menu) override {
+        TRSVCPH *module = dynamic_cast<TRSVCPH*>(this->module);
+
+
+        struct PolesHandler : MenuItem {
+            TRSVCPH *module;
+            int32_t phaserType;
+            void onAction(const event::Action &e) override {
+                module->use8Pole = phaserType;
+            }
+        };
+
+        struct PolesItem : MenuItem {
+            TRSVCPH *module;
+            Menu *createChildMenu() override {
+                Menu *menu = new Menu();
+                const std::string poles[] = {
+                    "4", "8 (CPU Beware)" 
+                };
+                for (int i = 0; i < (int) LENGTHOF(poles); i++) {
+                    PolesHandler *menuItem = createMenuItem<PolesHandler>(poles[i], CHECKMARK((module->use8Pole) == i));
+                    menuItem->module = module;
+                    menuItem->phaserType = i;
+                    menu->addChild(menuItem);
+                }
+                return menu;
+            }
+        };
+
+        menu->addChild(new MenuEntry);
+        PolesItem *poles = createMenuItem<PolesItem>("Phaser Poles");
+        poles->module = module;
+        poles->rightText = string::f("%d", ((module->use8Pole) + 1) * 4) + " " + RIGHT_ARROW;
+        menu->addChild(poles);
+
+    }
+
 };
 
 
