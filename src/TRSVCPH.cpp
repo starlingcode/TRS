@@ -78,10 +78,10 @@ struct TRSVCPH : Module {
         float phasedR = 0;
         if (use8Pole) {
             phasers8[1].setParams(freq, fb);
-            phasedR = phasers8[1].process(inL);
+            phasedR = phasers8[1].process(inR);
         } else {
             phasers4[1].setParams(freq, fb);
-            phasedR = phasers4[1].process(inL);
+            phasedR = phasers4[1].process(inR);
         }
 
         wet.setLeft(phasedL);

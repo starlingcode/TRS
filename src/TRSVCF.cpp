@@ -34,7 +34,7 @@ struct TRSVCF : Module {
 
     TRSVCF() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(FREQ_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(FREQ_PARAM, -5.f, 5.f, 0.f, "");
         configParam(RES_PARAM, 0.f, 1.f, 0.f, "");
 
         signalIn.configure(&inputs[IN_INPUT]);
@@ -48,12 +48,11 @@ struct TRSVCF : Module {
 
     }
 
-    float_4 delay1 = float_4(0);
-    float_4 delay2 = float_4(0);
-
-    JOSSVF<float_4> filters[2][2];
+    ZDFSVF<float_4> filters[2][2];
 
     void process(const ProcessArgs &args) override {
+
+        float_4 Ts = float_4(APP->engine->getSampleTime());
 
         outputs[HP_OUTPUT].setChannels(16);
         outputs[BP_OUTPUT].setChannels(16);
@@ -61,13 +60,31 @@ struct TRSVCF : Module {
 
         for (int polyChunk = 0; polyChunk < 2; polyChunk++) {
 
-            filters[0][polyChunk].process(params[FREQ_PARAM].getValue(), params[RES_PARAM].getValue(), signalIn.getLeft(polyChunk), linCV.getLeft(polyChunk), expoCV.getLeft(polyChunk), resCV.getLeft(polyChunk));
+            float_4 freql = float_4(480.f) * pow(float_4(2.f), expoCV.getLeft(polyChunk) + float_4(params[FREQ_PARAM].getValue())) * Ts;
+            freql *= clamp((linCV.getLeft(polyChunk) / float_4(5.f)) + float_4(1.f), 0.1f, 2.f);
+            freql = clamp(freql, 0.f, .49f);
+
+            float_4 res = (resCV.getLeft(polyChunk) / float_4(10.f));
+            res += float_4(params[RES_PARAM].getValue());
+            res = clamp(res, 0.f, 0.9999f);
+
+            filters[0][polyChunk].setParams(freql, res);
+            filters[0][polyChunk].process(signalIn.getLeft());
 
             hpOut.setLeft(filters[0][polyChunk].hpOut, polyChunk);
             bpOut.setLeft(filters[0][polyChunk].bpOut, polyChunk);
             lpOut.setLeft(filters[0][polyChunk].lpOut, polyChunk);
 
-            filters[1][polyChunk].process(params[FREQ_PARAM].getValue(), params[RES_PARAM].getValue(), signalIn.getRight(polyChunk), linCV.getRight(polyChunk), expoCV.getRight(polyChunk), resCV.getRight(polyChunk));
+            float_4 freqr = float_4(480.f) * pow(float_4(2.f), expoCV.getRight(polyChunk) + float_4(params[FREQ_PARAM].getValue())) * Ts;
+            freqr *= clamp((linCV.getRight(polyChunk) / float_4(5.f)) + float_4(1.f), 0.1f, 2.f);
+            freqr = clamp(freqr, 0.f, .49f);
+
+            res = (resCV.getRight(polyChunk) / float_4(10.f));
+            res += float_4(params[RES_PARAM].getValue());
+            res = clamp(res, 0.f, 0.9999f);
+
+            filters[1][polyChunk].setParams(freqr, res);
+            filters[1][polyChunk].process(signalIn.getRight());
 
             hpOut.setRight(filters[1][polyChunk].hpOut, polyChunk);
             bpOut.setRight(filters[1][polyChunk].bpOut, polyChunk);
