@@ -582,21 +582,23 @@ struct BBD {
 			float laplacePoleI;
 
 			transform(conjRPoles[i], conjIPoles[i], &laplacePoleR, &laplacePoleI, hostSampleTime);
-			if (laplacePoleR > 0) {
-				laplacePoleR *= -1;
-			}
 			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
 			float pArg = complexAngle(laplacePoleR, laplacePoleI);
 
 			zStates1In[i] = T(0);
 			zStates2In[i] = T(0);
 			zStates3In[i] = T(0);
-			zA0In[i] = T(2 * cos(pArg));
-			zA1In[i] = T(-pAbs * pAbs);
+			zA0In[i] = T(-2 * laplacePoleR);
+			zA1In[i] = T(pAbs * pAbs);
 			zpArgIn[i] = T(pArg);
 			zpAbsIn[i] = T(pAbs);
 			zrArgIn[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
 			zBetasIn[i] = T(2 * hostSampleTime * complexMagnitude(conjRResidues[i], conjIResidues[i]));
+
+			T test = calculateInputWeightB0(.5f, i);
+			printf("INPUT Test b0 section %d: %4.4f \n", i, test[0]);
+			test = calculateInputWeightB1(.5f, i);
+			printf("INPUT Test b1 section %d: %4.4f \n", i, test[0]);
 
 		}
 
@@ -666,22 +668,25 @@ struct BBD {
 			transform(conjRPoles[i], conjIPoles[i], &laplacePoleR, &laplacePoleI, hostSampleTime);
 			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
 			float pArg = complexAngle(laplacePoleR, laplacePoleI);
+			float rArg = complexAngle(conjRResidues[i], conjIResidues[i]);
 
+			printf("PoleR section %d: %4.4f \n", i, conjRPoles[i]);
+			printf("PoleI section %d: %4.4f \n", i, conjIPoles[i]);
 			printf("laplacePoleR section %d: %4.4f \n", i, laplacePoleR);
 			printf("laplacePoleI section %d: %4.4f \n", i, laplacePoleI);
 			printf("pAbs section %d: %4.4f \n", i, pAbs);
 			printf("pArg section %d: %4.4f \n", i, pArg);
-			printf("A0 section %d: %4.4f \n", i, 2 * cos(pArg));
+			printf("rArg section %d: %4.4f \n", i, rArg);
 
 			zStates1Out[i] = T(0);
 			zStates2Out[i] = T(0);
 			zMultirateSum1Out[i] = T(0);
 			zMultirateSum2Out[i] = T(0);
-			zA0Out[i] = T(2 * cos(pArg));
-			zA1Out[i] = T(-pAbs * pAbs);
+			zA0Out[i] = T(-2 * laplacePoleR);
+			zA1Out[i] = T(pAbs * pAbs);
 			zpArgOut[i] = T(pArg);
 			zpAbsOut[i] = T(pAbs);
-			zrArgOut[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
+			zrArgOut[i] = T(rArg);
 			float pRQuotientR;
 			float pRQuotientI;
 			divideZ(conjRResidues[i], conjIResidues[i], conjRPoles[i], conjIPoles[i], &pRQuotientR, &pRQuotientI); 
@@ -689,8 +694,13 @@ struct BBD {
 			printf("pRQuotientI section %d: %4.4f \n", i, pRQuotientI);
 			zBetasOut[i] = T(2 * complexMagnitude(pRQuotientR, pRQuotientI));
 			printf("zBetasOut section %d: %4.4f \n", i, zBetasOut[i][0]);
-			H0 += pRQuotientR;
-
+			H0 += -T(pRQuotientR);
+			divideZ(conjRResidues[i], -conjIResidues[i], conjRPoles[i], -conjIPoles[i], &pRQuotientR, &pRQuotientI); 
+			H0 += -T(pRQuotientR);
+			T test = calculateOutputWeightB0(.5f, i);
+			printf("Test b0 section %d: %4.4f \n", i, test[0]);
+			test = calculateOutputWeightB1(.5f, i);
+			printf("Test b1 section %d: %4.4f \n", i, test[0]);
 
 		}
 
@@ -719,20 +729,21 @@ struct BBD {
 
 	T calculateInputWeightR(float delay, int sectionIndex) {
 
-		return T(hostSampleTime * realResiduesIn[sectionIndex] * pow(realPolesIn[sectionIndex], delay));
+		return T(hostSampleTime * realResiduesIn[sectionIndex] * pow(realPolesIn[sectionIndex], T(delay)));
+		// return 1.f;
 
 	}
 
 	T calculateInputWeightB0(float delay, int sectionIndex) {
 
-		return zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay) * cos(zrArgIn[sectionIndex] + delay * zpArgIn[sectionIndex]);
+		return zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], T(delay)) * cos(zrArgIn[sectionIndex] + T(delay) * zpArgIn[sectionIndex]);
 
 	}
 
 	// consolidate with above to save a pow
 	T calculateInputWeightB1(float delay, int sectionIndex) {
 
-		return -zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], delay + 1) * cos(zrArgIn[sectionIndex] + (delay - 1) * zpArgIn[sectionIndex]);
+		return -zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], T(delay + 1.f)) * cos(zrArgIn[sectionIndex] + T(delay - 1.f) * zpArgIn[sectionIndex]);
 
 	}
 
@@ -759,13 +770,18 @@ struct BBD {
 
 	T calculateOutputWeightR(float delay, int sectionIndex) {
 
-		return T(realResiduesOut[sectionIndex] * pow(realPolesOut[sectionIndex], 1 - delay));
+		// return T(realResiduesOut[sectionIndex] * pow(realPolesOut[sectionIndex], T(1.f - delay)));
+		return 1.f;
 
 	}
 
 	T calculateOutputWeightB0(float delay, int sectionIndex) {
 
-		return zBetasOut[sectionIndex] * pow(zpAbsOut[sectionIndex], 1 - delay) * cos(zrArgOut[sectionIndex] + (1 - delay) * zpArgOut[sectionIndex]);
+		T beta = zBetasOut[sectionIndex];
+		T powMag = pow(zpAbsOut[sectionIndex], T(1 - delay));
+		T angle = cos(zrArgOut[sectionIndex] + T(1 - delay) * zpArgOut[sectionIndex]);
+
+		return beta * powMag * angle;
 
 	}
 
@@ -832,7 +848,7 @@ struct BBD {
 
 	T processOutputNative(void) {
 
-		T output = lastOut * H0;
+		T output = lastOut * .5;
 
 		for (int i = 0; i < numRealOut; i++) {
 			output += realStatesOut[i];
@@ -892,8 +908,7 @@ struct BBD {
 
 		while (bbdTimeIndex < nativeTimeIndex) {
 
-			float delay = bbdTimeIndex - (nativeTimeIndex - 1);
-			// delay = 1 - delay;
+			float delay = bbdTimeIndex - floor(bbdTimeIndex);
 
 			if (bbdStepTracker & 1) {
 				// even steps
