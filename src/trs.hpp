@@ -733,7 +733,6 @@ struct BBD {
 	T calculateInputWeightR(float delay, int sectionIndex) {
 
 		return T(hostSampleTime * realResiduesIn[sectionIndex] * pow(realPolesIn[sectionIndex], T(delay)));
-		// return 1.f;
 
 	}
 
@@ -773,8 +772,7 @@ struct BBD {
 
 	T calculateOutputWeightR(float delay, int sectionIndex) {
 
-		// return T(realResiduesOut[sectionIndex] * pow(realPolesOut[sectionIndex], T(1.f - delay)));
-		return 1.f;
+		return T(realResiduesOut[sectionIndex] * pow(realPolesOut[sectionIndex], T(1.f - delay)));
 
 	}
 
@@ -840,12 +838,12 @@ struct BBD {
 			realStatesOut[i] += input * calculateOutputWeightR(delay, i);
 		}
 
-		// for (int i = 0; i < numConjOut; i++) {
-		// 	T b0 = calculateOutputWeightB0(delay, i);
-		// 	T b1 = calculateOutputWeightB1(delay, i);
-		// 	zStates1Out[i] += input * b0;
-		// 	zStates2Out[i] += input * b1;
-		// }
+		for (int i = 0; i < numConjOut; i++) {
+			T b0 = calculateOutputWeightB0(delay, i);
+			T b1 = calculateOutputWeightB1(delay, i);
+			zStates1Out[i] += input * b0;
+			zStates2Out[i] += input * b1;
+		}
 
 	}
 
@@ -853,10 +851,15 @@ struct BBD {
 
 		T output = lastOut;
 
-		// for (int i = 0; i < numConjOut; i++) {
-		// 	output += zStates1Out[i];
-		// 	updateOutputStateZ(i);
-		// }
+		for (int i = 0; i < numRealOut; i++) {
+			output += realStatesOut[i];
+			updateOutputStateR(i);
+		}
+
+		for (int i = 0; i < numConjOut; i++) {
+			output += zStates1Out[i];
+			updateOutputStateZ(i);
+		}
 
 		return output;
 		
@@ -909,10 +912,7 @@ struct BBD {
 			float delay = bbdTimeIndex - (nativeTimeIndex - 1);
 
 			if (bbdStepTracker & 1) {
-				// even steps
 				writeBBD(processInputBBD(delay));
-				// delayOut = delay;
-				// printf("%1.8f \n", delay);
 			} else {
 				// odd steps
 				processOutputBBD(readBBDDelta(), delay);
@@ -930,7 +930,6 @@ struct BBD {
 
 		processInputNative(input);
 		float_4 output = processOutputNative();
-		// printf("%1.8f \n", output[0]);
 		return output;
 
 	}

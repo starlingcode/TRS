@@ -66,7 +66,7 @@ struct TRSBBD : Module {
         timeCV *= 400000.f;
         timeCV += 14000.f;
 
-        signalOut.setLeft(bbds[0][0].process(signalIn.getLeft(), 90000.f), 0);
+        signalOut.setLeft(bbds[0][0].process(signalIn.getLeft(), timeCV), 0);
 
         timeCV = timeIn.getRight();
         timeCV += 5.f;
@@ -76,7 +76,7 @@ struct TRSBBD : Module {
         timeCV *= 400000.f;
         timeCV += 14000.f;
 
-        signalOut.setRight(bbds[0][1].process(signalIn.getRight(), 90000.f), 0);
+        signalOut.setRight(bbds[0][1].process(signalIn.getRight(), timeCV), 0);
 
         // outputs[SIGNAL_OUTPUT].setChannels(16);
 
