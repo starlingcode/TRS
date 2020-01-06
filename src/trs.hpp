@@ -563,7 +563,10 @@ struct BBD {
 			realStatesIn[i] = T(0);
 			realPolesIn[i] = T(exp(realPoles[i] * hostSampleTime));
 			realResiduesIn[i] = T(realResidues[i]);
+			printf("in real transformed pole: %4.4f \n", i, realPolesIn[i][0]);
 		}
+		T test = calculateInputWeightR(.5f, 0);
+		printf("g test: %3.5f \n", test[0]);
 
 		zStates1In = (T*) malloc(conjSections * sizeof(T));
 		zStates2In = (T*) malloc(conjSections * sizeof(T));
@@ -588,8 +591,8 @@ struct BBD {
 			zStates1In[i] = T(0);
 			zStates2In[i] = T(0);
 			zStates3In[i] = T(0);
-			zA0In[i] = T(-2 * laplacePoleR);
-			zA1In[i] = T(pAbs * pAbs);
+			zA0In[i] = T(2 * laplacePoleR);
+			zA1In[i] = T(-pAbs * pAbs);
 			zpArgIn[i] = T(pArg);
 			zpAbsIn[i] = T(pAbs);
 			zrArgIn[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
@@ -682,8 +685,8 @@ struct BBD {
 			zStates2Out[i] = T(0);
 			zMultirateSum1Out[i] = T(0);
 			zMultirateSum2Out[i] = T(0);
-			zA0Out[i] = T(-2 * laplacePoleR);
-			zA1Out[i] = T(pAbs * pAbs);
+			zA0Out[i] = T(2 * laplacePoleR);
+			zA1Out[i] = T(-pAbs * pAbs);
 			zpArgOut[i] = T(pArg);
 			zpAbsOut[i] = T(pAbs);
 			zrArgOut[i] = T(rArg);
@@ -837,23 +840,18 @@ struct BBD {
 			realStatesOut[i] += input * calculateOutputWeightR(delay, i);
 		}
 
-		for (int i = 0; i < numConjOut; i++) {
-			T b0 = calculateOutputWeightB0(delay, i);
-			T b1 = calculateOutputWeightB1(delay, i);
-			zStates1Out[i] += input * b0;
-			zStates2Out[i] += input * b1;
-		}
+		// for (int i = 0; i < numConjOut; i++) {
+		// 	T b0 = calculateOutputWeightB0(delay, i);
+		// 	T b1 = calculateOutputWeightB1(delay, i);
+		// 	zStates1Out[i] += input * b0;
+		// 	zStates2Out[i] += input * b1;
+		// }
 
 	}
 
 	T processOutputNative(void) {
 
-		T output = lastOut * .5;
-
-		for (int i = 0; i < numRealOut; i++) {
-			output += realStatesOut[i];
-			updateOutputStateR(i);
-		}
+		T output = lastOut;
 
 		// for (int i = 0; i < numConjOut; i++) {
 		// 	output += zStates1Out[i];
@@ -904,15 +902,17 @@ struct BBD {
 
 		float bbdStep = 1/(clockFreq * hostSampleTime);
 
-		nativeTimeIndex ++;
+		nativeTimeIndex += 1.f;
 
 		while (bbdTimeIndex < nativeTimeIndex) {
 
-			float delay = bbdTimeIndex - floor(bbdTimeIndex);
+			float delay = bbdTimeIndex - (nativeTimeIndex - 1);
 
 			if (bbdStepTracker & 1) {
 				// even steps
 				writeBBD(processInputBBD(delay));
+				// delayOut = delay;
+				// printf("%1.8f \n", delay);
 			} else {
 				// odd steps
 				processOutputBBD(readBBDDelta(), delay);
@@ -929,7 +929,9 @@ struct BBD {
 		}
 
 		processInputNative(input);
-		return processOutputNative();
+		float_4 output = processOutputNative();
+		// printf("%1.8f \n", output[0]);
+		return output;
 
 	}
 
