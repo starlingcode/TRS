@@ -23,7 +23,7 @@ struct TRSBBD : Module {
 
     Delay<float_4> delays[2][2];
 
-    BBD<float_4> bbds[2][2];
+    BBD<float> bbds[2][2];
 
     float sr = 44100.f;
 
@@ -37,7 +37,7 @@ struct TRSBBD : Module {
 
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(TIME_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(FEEDBACK_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(FEEDBACK_PARAM, 0.f, .75f, 0.f, "");
 
         fbIn.configure(&inputs[FEEDBACK_INPUT]);
         timeIn.configure(&inputs[TIME_INPUT]);
@@ -45,14 +45,18 @@ struct TRSBBD : Module {
 
         signalOut.configure(&outputs[SIGNAL_OUTPUT]);
 
+
+
         delays[0][0].init(48000);
         delays[0][1].init(48000);
         delays[1][0].init(48000);
         delays[1][1].init(48000);
-
         onSampleRateChange();
 
     }
+
+    float lastL = 0.f;
+    float lastR = 0.f;
 
     void process(const ProcessArgs &args) override {
 
@@ -66,7 +70,10 @@ struct TRSBBD : Module {
         timeCV *= 400000.f;
         timeCV += 14000.f;
 
-        signalOut.setLeft(bbds[0][0].process(signalIn.getLeft(), timeCV), 0);
+        float fb = clamp(params[FEEDBACK_PARAM].getValue() + fbIn.getLeft()/15.f, 0.f, .75f);
+        float out = bbds[0][0].process(signalIn.getLeft() + lastL * fb, timeCV);
+        lastL= out;
+        signalOut.setLeft(lastL);
 
         timeCV = timeIn.getRight();
         timeCV += 5.f;
@@ -76,7 +83,10 @@ struct TRSBBD : Module {
         timeCV *= 400000.f;
         timeCV += 14000.f;
 
-        signalOut.setRight(bbds[0][1].process(signalIn.getRight(), timeCV), 0);
+        fb = clamp(params[FEEDBACK_PARAM].getValue() + fbIn.getRight()/10.f, 0.f, .99999f);
+        out = bbds[0][1].process(signalIn.getRight() + lastR * fb, timeCV);
+        lastR= out;
+        signalOut.setRight(lastR);
 
         // outputs[SIGNAL_OUTPUT].setChannels(16);
 
@@ -103,12 +113,12 @@ struct TRSBBD : Module {
 
     void onSampleRateChange() override {
         
-        sr = APP->engine->getSampleRate();
+        sr = APP->engine->getSampleTime();
 
-        bbds[0][0].changeSR(sr);
-        bbds[0][1].changeSR(sr);
-        bbds[1][0].changeSR(sr);
-        bbds[1][1].changeSR(sr);
+        bbds[0][0].reformFilters(sr);
+        bbds[0][1].reformFilters(sr);
+        bbds[1][0].reformFilters(sr);
+        bbds[1][1].reformFilters(sr);
 
     }
 

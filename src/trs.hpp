@@ -497,6 +497,8 @@ struct Delay {
 };
 
 // from DAFX '18 Holters and Parker "Combined Model for a Bucket Brigade Device and its Input and Output Filters"
+// a bit excessive because it allows the filters to be designed from an arbitrary PFE
+// this could probably be slick with a pass of template metaprogramming
 
 template <typename T = float_4, int32_t SIZE = 256>
 struct BBD {
@@ -505,7 +507,7 @@ struct BBD {
 
 	
 	//
-	// coefficient precalculation helpers
+	// design helpers for learning purposes
 	//
 
 	float complexMagnitude(float r, float i) {
@@ -548,9 +550,7 @@ struct BBD {
 	T * zrArgIn;
 	T * zBetasIn;
 
-	void initInputFilter(int realSections, float * realResidues, float * realPoles,
-							int conjSections, float * conjRResidues, float * conjIResidues, 
-								float * conjRPoles, float * conjIPoles) {
+	void initInputFilter(int realSections, int conjSections) {
 
 		numRealIn = realSections;
 		numConjIn = conjSections;
@@ -558,15 +558,6 @@ struct BBD {
 		realStatesIn = (T*) malloc(realSections * sizeof(T));
 		realPolesIn = (T*) malloc(realSections * sizeof(T));
 		realResiduesIn = (T*) malloc(realSections * sizeof(T));
-
-		for (int i = 0; i < realSections; i++) {
-			realStatesIn[i] = T(0);
-			realPolesIn[i] = T(exp(realPoles[i] * hostSampleTime));
-			realResiduesIn[i] = T(realResidues[i]);
-			printf("in real transformed pole: %4.4f \n", i, realPolesIn[i][0]);
-		}
-		T test = calculateInputWeightR(.5f, 0);
-		printf("g test: %3.5f \n", test[0]);
 
 		zStates1In = (T*) malloc(conjSections * sizeof(T));
 		zStates2In = (T*) malloc(conjSections * sizeof(T));
@@ -578,8 +569,20 @@ struct BBD {
 		zrArgIn = (T*) malloc(conjSections * sizeof(T));
 		zBetasIn = (T*) malloc(conjSections * sizeof(T));
 
+	}
 
-		for (int i = 0; i < conjSections; i++) {
+	void calculateInputFilter(float * realResidues, float * realPoles,
+								float * conjRResidues, float * conjIResidues, 
+									float * conjRPoles, float * conjIPoles) {
+
+		for (int i = 0; i < numRealIn; i++) {
+			realStatesIn[i] = T(0);
+			realPolesIn[i] = T(exp(realPoles[i] * hostSampleTime));
+			realResiduesIn[i] = T(realResidues[i]);
+		}
+
+
+		for (int i = 0; i < numConjIn; i++) {
 
 			float laplacePoleR;
 			float laplacePoleI;
@@ -587,6 +590,7 @@ struct BBD {
 			transform(conjRPoles[i], conjIPoles[i], &laplacePoleR, &laplacePoleI, hostSampleTime);
 			float pAbs = complexMagnitude(laplacePoleR, laplacePoleI);
 			float pArg = complexAngle(laplacePoleR, laplacePoleI);
+
 
 			zStates1In[i] = T(0);
 			zStates2In[i] = T(0);
@@ -598,12 +602,8 @@ struct BBD {
 			zrArgIn[i] = T(complexAngle(conjRResidues[i], conjIResidues[i]));
 			zBetasIn[i] = T(2 * hostSampleTime * complexMagnitude(conjRResidues[i], conjIResidues[i]));
 
-			T test = calculateInputWeightB0(.5f, i);
-			printf("INPUT Test b0 section %d: %4.4f \n", i, test[0]);
-			test = calculateInputWeightB1(.5f, i);
-			printf("INPUT Test b1 section %d: %4.4f \n", i, test[0]);
-
 		}
+
 
 	}
 
@@ -621,8 +621,6 @@ struct BBD {
 	int numConjOut;
 	T * zStates1Out;
 	T * zStates2Out;
-	T * zMultirateSum1Out;
-	T * zMultirateSum2Out;
 	T * zA0Out;
 	T * zA1Out;
 	T * zpArgOut;
@@ -631,9 +629,7 @@ struct BBD {
 	T * zBetasOut;
 	T H0 = 0;
 
-	void initOutputFilter(int realSections, float * realResidues, float * realPoles,
-							int conjSections, float * conjRResidues, float * conjIResidues, 
-								float * conjRPoles, float * conjIPoles) {
+	void initOutputFilter(int realSections, int conjSections) {
 
 		numRealOut = realSections;
 		numConjOut = conjSections;
@@ -643,27 +639,32 @@ struct BBD {
 		realPolesOut = (T*) malloc(realSections * sizeof(T));
 		realResiduesOut = (T*) malloc(realSections * sizeof(T));
 
-		for (int i = 0; i < realSections; i++) {
-			realStatesOut[i] = T(0);
-			realMultirateSumOut[i] = T(0);
-			realPolesOut[i] = T(exp(realPoles[i] * hostSampleTime));
-			realResiduesOut[i] = T(realResidues[i]/realPoles[i]);
-			H0 += T(realResidues[i]/realPoles[i]);
-		}
-
 		zStates1Out = (T*) malloc(conjSections * sizeof(T));
 		zStates2Out = (T*) malloc(conjSections * sizeof(T));
-		zMultirateSum1Out = (T*) malloc(conjSections * sizeof(T));
-		zMultirateSum2Out = (T*) malloc(conjSections * sizeof(T));
+
 		zA0Out = (T*) malloc(conjSections * sizeof(T));
 		zA1Out = (T*) malloc(conjSections * sizeof(T));
+
 		zpArgOut = (T*) malloc(conjSections * sizeof(T));
 		zpAbsOut = (T*) malloc(conjSections * sizeof(T));
 		zrArgOut = (T*) malloc(conjSections * sizeof(T));
 		zBetasOut = (T*) malloc(conjSections * sizeof(T));
 
+	}
 
-		for (int i = 0; i < conjSections; i++) {
+	void calculateOutputFilter(float * realResidues, float * realPoles,
+								float * conjRResidues, float * conjIResidues, 
+									float * conjRPoles, float * conjIPoles) {
+
+		for (int i = 0; i < numRealOut; i++) {
+
+			realStatesOut[i] = T(0);
+			realMultirateSumOut[i] = T(0);
+			realPolesOut[i] = T(exp(realPoles[i] * hostSampleTime));
+			realResiduesOut[i] = T(realResidues[i]/realPoles[i]);
+		}
+
+		for (int i = 0; i < numConjOut; i++) {
 
 			float laplacePoleR;
 			float laplacePoleI;
@@ -673,37 +674,20 @@ struct BBD {
 			float pArg = complexAngle(laplacePoleR, laplacePoleI);
 			float rArg = complexAngle(conjRResidues[i], conjIResidues[i]);
 
-			printf("PoleR section %d: %4.4f \n", i, conjRPoles[i]);
-			printf("PoleI section %d: %4.4f \n", i, conjIPoles[i]);
-			printf("laplacePoleR section %d: %4.4f \n", i, laplacePoleR);
-			printf("laplacePoleI section %d: %4.4f \n", i, laplacePoleI);
-			printf("pAbs section %d: %4.4f \n", i, pAbs);
-			printf("pArg section %d: %4.4f \n", i, pArg);
-			printf("rArg section %d: %4.4f \n", i, rArg);
-
 			zStates1Out[i] = T(0);
 			zStates2Out[i] = T(0);
-			zMultirateSum1Out[i] = T(0);
-			zMultirateSum2Out[i] = T(0);
+			
 			zA0Out[i] = T(2 * laplacePoleR);
 			zA1Out[i] = T(-pAbs * pAbs);
-			zpArgOut[i] = T(pArg);
+
 			zpAbsOut[i] = T(pAbs);
+			zpArgOut[i] = T(pArg);
 			zrArgOut[i] = T(rArg);
+
 			float pRQuotientR;
 			float pRQuotientI;
 			divideZ(conjRResidues[i], conjIResidues[i], conjRPoles[i], conjIPoles[i], &pRQuotientR, &pRQuotientI); 
-			printf("pRQuotientR section %d: %4.4f \n", i, pRQuotientR);
-			printf("pRQuotientI section %d: %4.4f \n", i, pRQuotientI);
 			zBetasOut[i] = T(2 * complexMagnitude(pRQuotientR, pRQuotientI));
-			printf("zBetasOut section %d: %4.4f \n", i, zBetasOut[i][0]);
-			H0 += -T(pRQuotientR);
-			divideZ(conjRResidues[i], -conjIResidues[i], conjRPoles[i], -conjIPoles[i], &pRQuotientR, &pRQuotientI); 
-			H0 += -T(pRQuotientR);
-			T test = calculateOutputWeightB0(.5f, i);
-			printf("Test b0 section %d: %4.4f \n", i, test[0]);
-			test = calculateOutputWeightB1(.5f, i);
-			printf("Test b1 section %d: %4.4f \n", i, test[0]);
 
 		}
 
@@ -793,6 +777,90 @@ struct BBD {
 
 	}
 
+	// 
+	// LUT TEST
+	//
+	// for a given filter, a polynomial approximation would be best practice probably
+	// this might work for whatever you throw at it
+
+	static const int lutSize = 256;
+	//int paddingDown = 0;
+	int paddingUp = 1;
+
+	T ** inputWeightR;
+	T ** inputWeightB0;
+	T ** inputWeightB1;
+
+	T ** outputWeightR;
+	T ** outputWeightB0;
+	T ** outputWeightB1;
+
+	// each coefficient gets an array of tables indexed by section enum
+
+	void initLUT(void) {
+
+		inputWeightR = (T **)malloc(numRealIn * sizeof(T *)); 
+	    for (int i = 0; i<numRealIn; i++) 
+	        inputWeightR[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
+	    inputWeightB0 = (T **)malloc(numConjIn * sizeof(T *)); 
+	    for (int i = 0; i<numConjOut; i++) 
+	        inputWeightB0[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
+	    inputWeightB1 = (T **)malloc(numConjIn * sizeof(T *)); 
+	    for (int i = 0; i<numConjOut; i++) 
+	        inputWeightB1[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
+
+
+	    outputWeightR = (T **)malloc(numRealOut * sizeof(T *)); 
+	    for (int i = 0; i<numRealOut; i++) 
+	       	outputWeightR[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
+	    outputWeightB0 = (T **)malloc(numConjOut * sizeof(T *)); 
+	    for (int i = 0; i<numConjOut; i++) 
+	        outputWeightB0[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
+	    outputWeightB1 = (T **)malloc(numConjOut * sizeof(T *)); 
+	    for (int i = 0; i<numConjOut; i++) 
+	        outputWeightB1[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
+
+	}
+
+	// precalculate the 0 to 1 range of each function and store
+
+	void fillLUT(void) {
+
+	    for (int i = 0; i < numRealIn; i++) {
+	        for (int j = 0; j < (lutSize + paddingUp); j++) {
+	        	inputWeightR[i][j] = calculateInputWeightR((float) j / (float) lutSize, i);
+	        }
+	    }
+
+	    for (int i = 0; i < numConjIn; i++) {
+	        for (int j = 0; j < (lutSize + paddingUp); j++) {
+	        	inputWeightB0[i][j] = calculateInputWeightB0((float) j / (float) lutSize, i);
+	        	inputWeightB1[i][j] = calculateInputWeightB1((float) j / (float) lutSize, i);
+	        }
+	    }
+
+	    for (int i = 0; i < numRealOut; i++) {
+	        for (int j = 0; j < (lutSize + paddingUp); j++) {
+	        	outputWeightR[i][j] = calculateOutputWeightR((float) j / (float) lutSize, i);
+	        }
+	    }
+
+	    for (int i = 0; i < numConjOut; i++) {
+	        for (int j = 0; j < (lutSize + paddingUp); j++) {
+	        	outputWeightB0[i][j] = calculateOutputWeightB0((float) j / (float) lutSize, i);
+	        	outputWeightB1[i][j] = calculateOutputWeightB1((float) j / (float) lutSize, i);
+	        }
+	    }
+
+	}
+
+	T getWeightLin(float d, T * table)  {
+		d *= (float) lutSize;
+		int intPart = (int) d;
+		float fracPart = d - (float) intPart;
+		return table[intPart] * (1.f - fracPart) + table[intPart + 1] * fracPart;
+	}
+
 	
 	//
 	// input process steps
@@ -803,12 +871,12 @@ struct BBD {
 		T bbdIn = T(0);
 
 		for (int i = 0; i < numRealIn; i++) {
-			bbdIn += realStatesIn[i] * calculateInputWeightR(delay, i);
+			bbdIn += realStatesIn[i] * getWeightLin(delay, inputWeightR[i]);
 		}
 
 		for (int i = 0; i < numConjIn; i++) {
-			bbdIn += zStates1In[i] * calculateInputWeightB0(delay, i);
-			bbdIn += zStates2In[i] * calculateInputWeightB1(delay, i);
+			bbdIn += zStates1In[i] * getWeightLin(delay, inputWeightB0[i]);
+			bbdIn += zStates2In[i] * getWeightLin(delay, inputWeightB1[i]);
 		}
 
 		return bbdIn;
@@ -835,14 +903,12 @@ struct BBD {
 	void processOutputBBD(T input, float delay) {
 
 		for (int i = 0; i < numRealOut; i++) {
-			realStatesOut[i] += input * calculateOutputWeightR(delay, i);
+			realStatesOut[i] += input * getWeightLin(delay, outputWeightR[i]);
 		}
 
 		for (int i = 0; i < numConjOut; i++) {
-			T b0 = calculateOutputWeightB0(delay, i);
-			T b1 = calculateOutputWeightB1(delay, i);
-			zStates1Out[i] += input * b0;
-			zStates2Out[i] += input * b1;
+			zStates1Out[i] += input * getWeightLin(delay, outputWeightB0[i]);
+			zStates2Out[i] += input * getWeightLin(delay, outputWeightB1[i]);
 		}
 
 	}
@@ -867,7 +933,7 @@ struct BBD {
 
 	
 	//
-	// delay line
+	// fixed delay line
 	//
 
 	T bbd[SIZE];
@@ -890,9 +956,9 @@ struct BBD {
 		return output;
 	}
 
-	void changeSR(float sr) {
-
-	}
+	//
+	// runtime 
+	//
 
 	float hostSampleTime = 1.f / 44100.f;
 	float nativeTimeIndex = 0;
@@ -903,6 +969,8 @@ struct BBD {
 
 	T process(T input, float clockFreq) {
 
+		// multirate stuff
+
 		float bbdStep = 1/(clockFreq * hostSampleTime);
 
 		nativeTimeIndex += 1.f;
@@ -912,6 +980,7 @@ struct BBD {
 			float delay = bbdTimeIndex - (nativeTimeIndex - 1);
 
 			if (bbdStepTracker & 1) {
+				// even steps
 				writeBBD(processInputBBD(delay));
 			} else {
 				// odd steps
@@ -923,16 +992,23 @@ struct BBD {
 
 		}
 
+		// make time loop
+
 		if (nativeTimeIndex >= 1000) {
 			bbdTimeIndex -= 1000;
 			nativeTimeIndex -= 1000;
 		}
 
+		// native sr stuff (recursive states)
+
 		processInputNative(input);
-		float_4 output = processOutputNative();
-		return output;
+		return processOutputNative();
 
 	}
+
+	//
+	// Initialization stuff (no real provision to change filters at the moment)
+	//
 
 	//
 	// Juno filter pair analysis from the paper
@@ -959,15 +1035,31 @@ struct BBD {
 	float zIOutRDefault[_DEFAULT_CONJ_SECTIONS] = {-99566.f, -24606.f};
 	float zIOutPDefault[_DEFAULT_CONJ_SECTIONS] = {21437.f, -59699.f};
 
+	// precompute constants, needs to be done before runtime and on sr change
+
+	void reformFilters(float Ts) { 
+
+		hostSampleTime = Ts;		
+
+		calculateInputFilter(rInRDefault, rInPDefault,
+								zRInRDefault, zIInRDefault, 
+									zRInPDefault, zIInPDefault);
+
+		calculateOutputFilter(rOutRDefault, rOutPDefault,
+								zROutRDefault, zIOutRDefault, 
+									zROutPDefault, zIOutPDefault);
+
+		fillLUT();
+
+	}
+
+	// block out da memory
+
 	BBD() {
 
-		initInputFilter(_DEFAULT_REAL_SECTIONS, rInRDefault, rInPDefault,
-							_DEFAULT_CONJ_SECTIONS, zRInRDefault, zIInRDefault, 
-								zRInPDefault, zIInPDefault);
-
-		initOutputFilter(_DEFAULT_REAL_SECTIONS, rOutRDefault, rOutPDefault,
-							_DEFAULT_CONJ_SECTIONS, zROutRDefault, zIOutRDefault, 
-								zROutPDefault, zIOutPDefault);
+		initInputFilter(_DEFAULT_REAL_SECTIONS, _DEFAULT_CONJ_SECTIONS);
+		initOutputFilter(_DEFAULT_REAL_SECTIONS, _DEFAULT_CONJ_SECTIONS);
+		initLUT();
 
 		for (int i = 0; i < SIZE; i++) {
 			bbd[i] = T(0);
