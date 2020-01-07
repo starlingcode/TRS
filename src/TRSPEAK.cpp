@@ -6,7 +6,7 @@ struct TRSPEAK : Module {
         THRESH_PARAM,
         GAIN_PARAM,
         ATTACK_PARAM,
-        MAKEUP_PARAM,
+        RELEASE_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -23,16 +23,58 @@ struct TRSPEAK : Module {
         NUM_LIGHTS
     };
 
+    StereoInHandler in;
+
+    StereoOutHandler gate;
+    StereoOutHandler out;
+    StereoOutHandler outInv;
+
+    PeakFollower<float_4> followers[2][2];
+
     TRSPEAK() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(THRESH_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(THRESH_PARAM, 0.f, 5.f, 0.f, "");
         configParam(GAIN_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(ATTACK_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(MAKEUP_PARAM, 0.f, 1.f, 0.f, "");
-    }
+        configParam(ATTACK_PARAM, 0.001f, 1.f, 0.f, "");
+        configParam(RELEASE_PARAM, 0.1f, 1.f, 0.f, "");
+
+        in.configure(&inputs[IN_INPUT]);
+
+        gate.configure(&outputs[GATE_OUTPUT]);
+        out.configure(&outputs[NONINV_OUTPUT]);
+        outInv.configure(&outputs[INV_OUTPUT]);
+
+    }   
 
     void process(const ProcessArgs &args) override {
+
+        outputs[GATE_OUTPUT].setChannels(16);
+        outputs[NONINV_OUTPUT].setChannels(16);
+        outputs[INV_OUTPUT].setChannels(16);
+
+        for (int polyChunk = 0; polyChunk < 2; polyChunk ++) {
+
+            followers[polyChunk][0].setTimes(params[ATTACK_PARAM].getValue(), params[RELEASE_PARAM].getValue());
+            followers[polyChunk][1].setTimes(params[ATTACK_PARAM].getValue(), params[RELEASE_PARAM].getValue());
+
+            float_4 follow = followers[polyChunk][0].process(in.getLeft(polyChunk));
+            gate.setLeft(ifelse(follow > 0.f, float_4(5.f), float_4(0.f)), polyChunk);
+            follow = clamp(follow - params[THRESH_PARAM].getValue(), 0.f, 10.f);
+            follow *= params[GAIN_PARAM].getValue();
+            out.setLeft(follow, polyChunk);
+            outInv.setLeft(-follow, polyChunk);
+
+            follow = followers[polyChunk][1].process(in.getRight(polyChunk));
+            gate.setRight(ifelse(follow > 0.f, float_4(5.f), float_4(0.f)), polyChunk);
+            follow = clamp(follow - params[THRESH_PARAM].getValue(), 0.f, 10.f);
+            follow *= params[GAIN_PARAM].getValue();
+            out.setRight(follow, polyChunk);
+            outInv.setRight(-follow, polyChunk);
+
+        }
+
     }
+
 };
 
 
@@ -49,7 +91,7 @@ struct TRSPEAKWidget : ModuleWidget {
         addParam(createParamCentered<SifamBlack>(mm2px(Vec(8.826, 17.609)), module, TRSPEAK::THRESH_PARAM));
         addParam(createParamCentered<SifamBlack>(mm2px(Vec(19.746, 38.717)), module, TRSPEAK::GAIN_PARAM));
         addParam(createParamCentered<SifamBlack>(mm2px(Vec(8.091, 57.997)), module, TRSPEAK::ATTACK_PARAM));
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(20.541, 77.701)), module, TRSPEAK::MAKEUP_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(20.541, 77.701)), module, TRSPEAK::RELEASE_PARAM));
 
         addInput(createInputCentered<HexJack>(mm2px(Vec(8.795, 99.501)), module, TRSPEAK::IN_INPUT));
 

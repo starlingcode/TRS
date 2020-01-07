@@ -21,13 +21,69 @@ struct TRSSINCOS : Module {
         NUM_LIGHTS
     };
 
+    StereoInHandler mono;
+    StereoInHandler stereo;
+    StereoInHandler depthCV;
+    
+    StereoOutHandler output;
+
+    // phase 0 - pi
+
+    float_4 bhaskaraSine(float_4 phase) {
+
+        float_4 pi = float_4(M_PI);
+
+        return (float_4(16.f) * phase * (pi - phase)) / (float_4(5.f) * pi * pi - float_4(4.f) * phase * (pi - phase));
+    }
+
     TRSSINCOS() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(DEPTH_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(BIAS_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(BIAS_PARAM, 0.f, 5.f, 0.f, "");
+
+        mono.configure(&inputs[MONO_INPUT]);
+        stereo.configure(&inputs[STEREO_INPUT]);
+        depthCV.configure(&inputs[DEPTH_INPUT]);
+
+        output.configure(&outputs[OUT_OUTPUT]);
+
     }
 
     void process(const ProcessArgs &args) override {
+
+        outputs[OUT_OUTPUT].setChannels(16);
+
+        for (int polyChunk = 0; polyChunk < 2; polyChunk ++) {
+
+            float_4 depth = clamp((depthCV.getLeft(polyChunk) / float_4(10.f)) + params[DEPTH_PARAM].getValue(), 0.f, 1.f);
+            float_4 in = mono.getLeft(polyChunk) + stereo.getLeft(polyChunk) + params[BIAS_PARAM].getValue();
+            in *= depth;
+
+            // scale -5 to -5 to -2 to -2
+            in *= float_4(2.f / 5.f);
+            int32_4 phaseHalf = abs((int32_4) floor(in));
+            phaseHalf &= int32_4(1);
+            float_4 sign = float_4(1.f) - (float_4(2.f) * float_4(phaseHalf));
+            float_4 out = in - floor(in);
+            out = bhaskaraSine(float_4(M_PI) * out);
+            output.setLeft(out * float_4(5.f) * sign, polyChunk);
+
+            depth =  clamp((depthCV.getRight(polyChunk) / float_4(5.f)) + params[DEPTH_PARAM].getValue(), 0.f, 1.f);
+            in = mono.getLeft(polyChunk) + stereo.getRight(polyChunk) + params[BIAS_PARAM].getValue();
+            in *= depth;
+
+            in *= float_4(2.f / 5.f);
+            // make cos
+            in += .5f;
+            phaseHalf = abs((int32_4) floor(in));
+            phaseHalf &= int32_4(1);
+            sign = float_4(1.f) - (float_4(2.f) * float_4(phaseHalf));
+            out = in - floor(in);
+            out = bhaskaraSine(float_4(M_PI) * out);
+            output.setRight(out * float_4(5.f) * sign, polyChunk);
+
+        }
+
     }
 };
 

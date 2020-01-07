@@ -4,6 +4,7 @@
 
 
 using simd::float_4;
+using simd::int32_4;
 
 struct StereoInHandler {
 	Input * input;
@@ -866,7 +867,7 @@ struct BBD {
 	// input process steps
 	//
 
-	T processInputBBD(float delay) {
+	T processInputBBDLin(float delay) {
 
 		T bbdIn = T(0);
 
@@ -877,6 +878,23 @@ struct BBD {
 		for (int i = 0; i < numConjIn; i++) {
 			bbdIn += zStates1In[i] * getWeightLin(delay, inputWeightB0[i]);
 			bbdIn += zStates2In[i] * getWeightLin(delay, inputWeightB1[i]);
+		}
+
+		return bbdIn;
+
+	}
+
+	T processInputBBDPure(float delay) {
+
+		T bbdIn = T(0);
+
+		for (int i = 0; i < numRealIn; i++) {
+			bbdIn += realStatesIn[i] * calculateInputWeightR(delay, i);
+		}
+
+		for (int i = 0; i < numConjIn; i++) {
+			bbdIn += zStates1In[i] * calculateInputWeightB0(delay, i);
+			bbdIn += zStates2In[i] * calculateInputWeightB1(delay, i);
 		}
 
 		return bbdIn;
@@ -900,7 +918,7 @@ struct BBD {
 	// output process steps
 	//
 
-	void processOutputBBD(T input, float delay) {
+	void processOutputBBDLin(T input, float delay) {
 
 		for (int i = 0; i < numRealOut; i++) {
 			realStatesOut[i] += input * getWeightLin(delay, outputWeightR[i]);
@@ -909,6 +927,19 @@ struct BBD {
 		for (int i = 0; i < numConjOut; i++) {
 			zStates1Out[i] += input * getWeightLin(delay, outputWeightB0[i]);
 			zStates2Out[i] += input * getWeightLin(delay, outputWeightB1[i]);
+		}
+
+	}
+
+	void processOutputBBDPure(T input, float delay) {
+
+		for (int i = 0; i < numRealOut; i++) {
+			realStatesOut[i] += input * calculateOutputWeightR(delay, i);
+		}
+
+		for (int i = 0; i < numConjOut; i++) {
+			zStates1Out[i] += input * calculateOutputWeightB0(delay, i);
+			zStates2Out[i] += input * calculateOutputWeightB1(delay, i);
 		}
 
 	}
@@ -981,10 +1012,10 @@ struct BBD {
 
 			if (bbdStepTracker & 1) {
 				// even steps
-				writeBBD(processInputBBD(delay));
+				writeBBD(processInputBBDLin(delay));
 			} else {
 				// odd steps
-				processOutputBBD(readBBDDelta(), delay);
+				processOutputBBDLin(readBBDDelta(), delay);
 			}
 			
 			bbdStepTracker++;
@@ -1064,6 +1095,51 @@ struct BBD {
 		for (int i = 0; i < SIZE; i++) {
 			bbd[i] = T(0);
 		}
+
+	}
+
+};
+
+//
+// Peak follower
+//
+template <typename T = float_4>
+struct PeakFollower {
+
+	T ts = T(1.f / 44100.f);
+
+	T attackTime = .01f;
+	T releaseTime = .1f;
+
+	T capVoltage = T(0);
+
+	void setTimes(T attack, T release) {
+
+		attackTime = attack;
+		releaseTime = release;
+
+	} 
+
+	void changeSR(float newTs) {
+
+		ts = newTs;
+
+	}
+
+	T process(T input) {
+
+		input = abs(input);
+
+		T attackWeight = ts / attackTime;
+		T releaseWeight = ts / releaseTime;
+
+		T weight = ifelse((capVoltage - input) <= 0.f, attackWeight, releaseWeight);
+
+		T delta = input - capVoltage;
+
+		capVoltage += delta * weight;
+
+		return capVoltage;
 
 	}
 
