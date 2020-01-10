@@ -36,6 +36,13 @@ struct TRSSINCOS : Module {
         return (float_4(16.f) * phase * (pi - phase)) / (float_4(5.f) * pi * pi - float_4(4.f) * phase * (pi - phase));
     }
 
+    #define SINCOS_OVERSAMPLE 4
+
+    UpsamplePow2<SINCOS_OVERSAMPLE, float_4> upsamplers[2][2];
+    DecimatePow2<SINCOS_OVERSAMPLE, float_4> decimators[2][2];
+
+    float_4 work[SINCOS_OVERSAMPLE];
+
     TRSSINCOS() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(DEPTH_PARAM, 0.f, 1.f, 0.f, "");
@@ -61,26 +68,35 @@ struct TRSSINCOS : Module {
 
             // scale -5 to -5 to -2 to -2
             in *= float_4(2.f / 5.f);
-            int32_4 phaseHalf = abs((int32_4) floor(in));
-            phaseHalf &= int32_4(1);
-            float_4 sign = float_4(1.f) - (float_4(2.f) * float_4(phaseHalf));
-            float_4 out = in - floor(in);
-            out = bhaskaraSine(float_4(M_PI) * out);
-            output.setLeft(out * float_4(5.f) * sign, polyChunk);
+            upsamplers[0][polyChunk].process(in);
+            for (int i = 0; i < SINCOS_OVERSAMPLE; i++) {
+                in = upsamplers[0][polyChunk].output[i];
+                int32_4 phaseHalf = abs((int32_4) floor(in));
+                phaseHalf &= int32_4(1);
+                float_4 sign = float_4(1.f) - (float_4(2.f) * float_4(phaseHalf));
+                float_4 out = in - floor(in);
+                work[i] = bhaskaraSine(float_4(M_PI) * out) * sign;
+            }
+            float_4 out = decimators[0][polyChunk].process(work);            
+            output.setLeft(out * float_4(5.f), polyChunk);
 
             depth =  clamp((depthCV.getRight(polyChunk) / float_4(5.f)) + params[DEPTH_PARAM].getValue(), 0.f, 1.f);
             in = mono.getLeft(polyChunk) + stereo.getRight(polyChunk) + params[BIAS_PARAM].getValue();
             in *= depth;
 
+            // scale -5 to -5 to -2 to -2
             in *= float_4(2.f / 5.f);
-            // make cos
-            in += .5f;
-            phaseHalf = abs((int32_4) floor(in));
-            phaseHalf &= int32_4(1);
-            sign = float_4(1.f) - (float_4(2.f) * float_4(phaseHalf));
-            out = in - floor(in);
-            out = bhaskaraSine(float_4(M_PI) * out);
-            output.setRight(out * float_4(5.f) * sign, polyChunk);
+            upsamplers[1][polyChunk].process(in);
+            for (int i = 0; i < SINCOS_OVERSAMPLE; i++) {
+                in = upsamplers[0][polyChunk].output[i];
+                int32_4 phaseHalf = abs((int32_4) floor(in));
+                phaseHalf &= int32_4(1);
+                float_4 sign = float_4(1.f) - (float_4(2.f) * float_4(phaseHalf));
+                float_4 out = in - floor(in);
+                work[i] = bhaskaraSine(float_4(M_PI) * out) * sign;
+            }
+            out = decimators[1][polyChunk].process(work);            
+            output.setRight(out * float_4(5.f), polyChunk);
 
         }
 

@@ -60,7 +60,8 @@ struct TRSVCF : Module {
 
         for (int polyChunk = 0; polyChunk < 2; polyChunk++) {
 
-            float_4 freql = float_4(480.f) * pow(float_4(2.f), expoCV.getLeft(polyChunk) + float_4(params[FREQ_PARAM].getValue())) * Ts;
+            float_4 freql = clamp(expoCV.getLeft(polyChunk) + float_4(params[FREQ_PARAM].getValue()), float_4(-10.f), float_4(10.f));
+            freql = float_4(480.f) * (dsp::approxExp2_taylor5(freql + 10.f)/float_4(1024.f)) * Ts;
             freql *= clamp((linCV.getLeft(polyChunk) / float_4(5.f)) + float_4(1.f), 0.1f, 2.f);
             freql = clamp(freql, 0.f, .49f);
 
@@ -75,7 +76,8 @@ struct TRSVCF : Module {
             bpOut.setLeft(filters[0][polyChunk].bpOut, polyChunk);
             lpOut.setLeft(filters[0][polyChunk].lpOut, polyChunk);
 
-            float_4 freqr = float_4(480.f) * pow(float_4(2.f), expoCV.getRight(polyChunk) + float_4(params[FREQ_PARAM].getValue())) * Ts;
+            float_4 freqr = clamp(expoCV.getRight(polyChunk) + float_4(params[FREQ_PARAM].getValue()), float_4(-10.f), float_4(10.f));
+            freqr = float_4(480.f) * (dsp::approxExp2_taylor5(freqr + 10.f)/float_4(1024.f)) * Ts;
             freqr *= clamp((linCV.getRight(polyChunk) / float_4(5.f)) + float_4(1.f), 0.1f, 2.f);
             freqr = clamp(freqr, 0.f, .49f);
 

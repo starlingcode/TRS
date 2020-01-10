@@ -38,8 +38,8 @@ struct TRSVCPH : Module {
 
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(FB_PARAM, 0.f, .5f, 0.f, "");
-        configParam(MIX_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(CVAMT_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(MIX_PARAM, 0.f, .5f, 0.f, "");
+        configParam(CVAMT_PARAM, 0.f, 1.f, 1.f, "");
 
         in.configure(&inputs[IN_INPUT]);
         cv.configure(&inputs[CV_INPUT]);
@@ -63,7 +63,7 @@ struct TRSVCPH : Module {
         float cvDepth = params[CVAMT_PARAM].getValue();
 
         float freq = clamp((cv.getLeft() * cvDepth), -5.f, 5.f);
-        freq = 480.f * pow(2, freq) * Ts;
+        freq = 480.f * (dsp::approxExp2_taylor5(freq + 5.f) / 32.f) * Ts;
         float phasedL = 0;
         if (use8Pole) {
             phasers8[0].setParams(freq, fb);
@@ -74,7 +74,7 @@ struct TRSVCPH : Module {
         }
 
         freq = clamp((cv.getRight() * cvDepth), -5.f, 5.f);
-        freq = 480.f * pow(2, freq) * Ts;
+        freq = 480.f * (dsp::approxExp2_taylor5(freq + 5.f) / 32.f) * Ts;
         float phasedR = 0;
         if (use8Pole) {
             phasers8[1].setParams(freq, fb);
@@ -89,8 +89,8 @@ struct TRSVCPH : Module {
 
         float mixAmount = params[MIX_PARAM].getValue();
 
-        mix.setLeft(phasedL + inL * mixAmount);
-        mix.setRight(phasedR + inR * mixAmount);
+        mix.setLeft(phasedL * .5f + inL * mixAmount);
+        mix.setRight(phasedR * .5f + inR * mixAmount);
 
     }
 };

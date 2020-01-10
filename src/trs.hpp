@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "ui.hpp"
 #include "matrix/math.hpp"
+#include "oversampling.hpp"
 
 
 using simd::float_4;
@@ -499,9 +500,8 @@ struct Delay {
 
 // from DAFX '18 Holters and Parker "Combined Model for a Bucket Brigade Device and its Input and Output Filters"
 // a bit excessive because it allows the filters to be designed from an arbitrary PFE
-// this could probably be slick with a pass of template metaprogramming
 
-template <typename T = float_4, int32_t SIZE = 256>
+template <typename T = float, int SIZE = 256, int R_IN = 1, int C_IN = 2, int R_OUT = 1, int C_OUT = 2>
 struct BBD {
 
 	/////////////// Filter stuff 
@@ -535,12 +535,10 @@ struct BBD {
 	// input filter init
 	//
 
-	int numRealIn;
 	T * realStatesIn;
 	T * realPolesIn;
 	T * realResiduesIn;
 
-	int numConjIn;
 	T * zStates1In;
 	T * zStates2In;
 	T * zStates3In;
@@ -551,24 +549,21 @@ struct BBD {
 	T * zrArgIn;
 	T * zBetasIn;
 
-	void initInputFilter(int realSections, int conjSections) {
+	void initInputFilter(void) {
 
-		numRealIn = realSections;
-		numConjIn = conjSections;
+		realStatesIn = (T*) malloc(R_IN * sizeof(T));
+		realPolesIn = (T*) malloc(R_IN * sizeof(T));
+		realResiduesIn = (T*) malloc(R_IN * sizeof(T));
 
-		realStatesIn = (T*) malloc(realSections * sizeof(T));
-		realPolesIn = (T*) malloc(realSections * sizeof(T));
-		realResiduesIn = (T*) malloc(realSections * sizeof(T));
-
-		zStates1In = (T*) malloc(conjSections * sizeof(T));
-		zStates2In = (T*) malloc(conjSections * sizeof(T));
-		zStates3In = (T*) malloc(conjSections * sizeof(T));
-		zA0In = (T*) malloc(conjSections * sizeof(T));
-		zA1In = (T*) malloc(conjSections * sizeof(T));
-		zpArgIn = (T*) malloc(conjSections * sizeof(T));
-		zpAbsIn = (T*) malloc(conjSections * sizeof(T));
-		zrArgIn = (T*) malloc(conjSections * sizeof(T));
-		zBetasIn = (T*) malloc(conjSections * sizeof(T));
+		zStates1In = (T*) malloc(C_IN * sizeof(T));
+		zStates2In = (T*) malloc(C_IN * sizeof(T));
+		zStates3In = (T*) malloc(C_IN * sizeof(T));
+		zA0In = (T*) malloc(C_IN * sizeof(T));
+		zA1In = (T*) malloc(C_IN * sizeof(T));
+		zpArgIn = (T*) malloc(C_IN * sizeof(T));
+		zpAbsIn = (T*) malloc(C_IN * sizeof(T));
+		zrArgIn = (T*) malloc(C_IN * sizeof(T));
+		zBetasIn = (T*) malloc(C_IN * sizeof(T));
 
 	}
 
@@ -576,14 +571,14 @@ struct BBD {
 								float * conjRResidues, float * conjIResidues, 
 									float * conjRPoles, float * conjIPoles) {
 
-		for (int i = 0; i < numRealIn; i++) {
+		for (int i = 0; i < R_IN; i++) {
 			realStatesIn[i] = T(0);
 			realPolesIn[i] = T(exp(realPoles[i] * hostSampleTime));
 			realResiduesIn[i] = T(realResidues[i]);
 		}
 
 
-		for (int i = 0; i < numConjIn; i++) {
+		for (int i = 0; i < C_IN; i++) {
 
 			float laplacePoleR;
 			float laplacePoleI;
@@ -613,13 +608,11 @@ struct BBD {
 	// output filter init
 	//
 
-	int numRealOut;
 	T * realStatesOut;
 	T * realMultirateSumOut;
 	T * realPolesOut;
 	T * realResiduesOut;
 
-	int numConjOut;
 	T * zStates1Out;
 	T * zStates2Out;
 	T * zA0Out;
@@ -630,26 +623,23 @@ struct BBD {
 	T * zBetasOut;
 	T H0 = 0;
 
-	void initOutputFilter(int realSections, int conjSections) {
+	void initOutputFilter(void) {
 
-		numRealOut = realSections;
-		numConjOut = conjSections;
+		realStatesOut = (T*) malloc(R_OUT * sizeof(T));
+		realMultirateSumOut = (T*) malloc(R_OUT * sizeof(T));
+		realPolesOut = (T*) malloc(R_OUT * sizeof(T));
+		realResiduesOut = (T*) malloc(R_OUT * sizeof(T));
 
-		realStatesOut = (T*) malloc(realSections * sizeof(T));
-		realMultirateSumOut = (T*) malloc(realSections * sizeof(T));
-		realPolesOut = (T*) malloc(realSections * sizeof(T));
-		realResiduesOut = (T*) malloc(realSections * sizeof(T));
+		zStates1Out = (T*) malloc(C_OUT * sizeof(T));
+		zStates2Out = (T*) malloc(C_OUT * sizeof(T));
 
-		zStates1Out = (T*) malloc(conjSections * sizeof(T));
-		zStates2Out = (T*) malloc(conjSections * sizeof(T));
+		zA0Out = (T*) malloc(C_OUT * sizeof(T));
+		zA1Out = (T*) malloc(C_OUT * sizeof(T));
 
-		zA0Out = (T*) malloc(conjSections * sizeof(T));
-		zA1Out = (T*) malloc(conjSections * sizeof(T));
-
-		zpArgOut = (T*) malloc(conjSections * sizeof(T));
-		zpAbsOut = (T*) malloc(conjSections * sizeof(T));
-		zrArgOut = (T*) malloc(conjSections * sizeof(T));
-		zBetasOut = (T*) malloc(conjSections * sizeof(T));
+		zpArgOut = (T*) malloc(C_OUT * sizeof(T));
+		zpAbsOut = (T*) malloc(C_OUT * sizeof(T));
+		zrArgOut = (T*) malloc(C_OUT * sizeof(T));
+		zBetasOut = (T*) malloc(C_OUT * sizeof(T));
 
 	}
 
@@ -657,7 +647,7 @@ struct BBD {
 								float * conjRResidues, float * conjIResidues, 
 									float * conjRPoles, float * conjIPoles) {
 
-		for (int i = 0; i < numRealOut; i++) {
+		for (int i = 0; i < R_OUT; i++) {
 
 			realStatesOut[i] = T(0);
 			realMultirateSumOut[i] = T(0);
@@ -665,7 +655,7 @@ struct BBD {
 			realResiduesOut[i] = T(realResidues[i]/realPoles[i]);
 		}
 
-		for (int i = 0; i < numConjOut; i++) {
+		for (int i = 0; i < C_OUT; i++) {
 
 			float laplacePoleR;
 			float laplacePoleI;
@@ -800,25 +790,25 @@ struct BBD {
 
 	void initLUT(void) {
 
-		inputWeightR = (T **)malloc(numRealIn * sizeof(T *)); 
-	    for (int i = 0; i<numRealIn; i++) 
+		inputWeightR = (T **)malloc(R_IN * sizeof(T *)); 
+	    for (int i = 0; i<R_IN; i++) 
 	        inputWeightR[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
-	    inputWeightB0 = (T **)malloc(numConjIn * sizeof(T *)); 
-	    for (int i = 0; i<numConjOut; i++) 
+	    inputWeightB0 = (T **)malloc(C_IN * sizeof(T *)); 
+	    for (int i = 0; i<C_OUT; i++) 
 	        inputWeightB0[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
-	    inputWeightB1 = (T **)malloc(numConjIn * sizeof(T *)); 
-	    for (int i = 0; i<numConjOut; i++) 
+	    inputWeightB1 = (T **)malloc(C_IN * sizeof(T *)); 
+	    for (int i = 0; i<C_OUT; i++) 
 	        inputWeightB1[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
 
 
-	    outputWeightR = (T **)malloc(numRealOut * sizeof(T *)); 
-	    for (int i = 0; i<numRealOut; i++) 
+	    outputWeightR = (T **)malloc(R_OUT * sizeof(T *)); 
+	    for (int i = 0; i<R_OUT; i++) 
 	       	outputWeightR[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
-	    outputWeightB0 = (T **)malloc(numConjOut * sizeof(T *)); 
-	    for (int i = 0; i<numConjOut; i++) 
+	    outputWeightB0 = (T **)malloc(C_OUT * sizeof(T *)); 
+	    for (int i = 0; i<C_OUT; i++) 
 	        outputWeightB0[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
-	    outputWeightB1 = (T **)malloc(numConjOut * sizeof(T *)); 
-	    for (int i = 0; i<numConjOut; i++) 
+	    outputWeightB1 = (T **)malloc(C_OUT * sizeof(T *)); 
+	    for (int i = 0; i<C_OUT; i++) 
 	        outputWeightB1[i] = (T *)malloc((lutSize + paddingUp) * sizeof(T));
 
 	}
@@ -827,26 +817,26 @@ struct BBD {
 
 	void fillLUT(void) {
 
-	    for (int i = 0; i < numRealIn; i++) {
+	    for (int i = 0; i < R_IN; i++) {
 	        for (int j = 0; j < (lutSize + paddingUp); j++) {
 	        	inputWeightR[i][j] = calculateInputWeightR((float) j / (float) lutSize, i);
 	        }
 	    }
 
-	    for (int i = 0; i < numConjIn; i++) {
+	    for (int i = 0; i < C_IN; i++) {
 	        for (int j = 0; j < (lutSize + paddingUp); j++) {
 	        	inputWeightB0[i][j] = calculateInputWeightB0((float) j / (float) lutSize, i);
 	        	inputWeightB1[i][j] = calculateInputWeightB1((float) j / (float) lutSize, i);
 	        }
 	    }
 
-	    for (int i = 0; i < numRealOut; i++) {
+	    for (int i = 0; i < R_OUT; i++) {
 	        for (int j = 0; j < (lutSize + paddingUp); j++) {
 	        	outputWeightR[i][j] = calculateOutputWeightR((float) j / (float) lutSize, i);
 	        }
 	    }
 
-	    for (int i = 0; i < numConjOut; i++) {
+	    for (int i = 0; i < C_OUT; i++) {
 	        for (int j = 0; j < (lutSize + paddingUp); j++) {
 	        	outputWeightB0[i][j] = calculateOutputWeightB0((float) j / (float) lutSize, i);
 	        	outputWeightB1[i][j] = calculateOutputWeightB1((float) j / (float) lutSize, i);
@@ -871,11 +861,11 @@ struct BBD {
 
 		T bbdIn = T(0);
 
-		for (int i = 0; i < numRealIn; i++) {
+		for (int i = 0; i < R_IN; i++) {
 			bbdIn += realStatesIn[i] * getWeightLin(delay, inputWeightR[i]);
 		}
 
-		for (int i = 0; i < numConjIn; i++) {
+		for (int i = 0; i < C_IN; i++) {
 			bbdIn += zStates1In[i] * getWeightLin(delay, inputWeightB0[i]);
 			bbdIn += zStates2In[i] * getWeightLin(delay, inputWeightB1[i]);
 		}
@@ -888,11 +878,11 @@ struct BBD {
 
 		T bbdIn = T(0);
 
-		for (int i = 0; i < numRealIn; i++) {
+		for (int i = 0; i < R_IN; i++) {
 			bbdIn += realStatesIn[i] * calculateInputWeightR(delay, i);
 		}
 
-		for (int i = 0; i < numConjIn; i++) {
+		for (int i = 0; i < C_IN; i++) {
 			bbdIn += zStates1In[i] * calculateInputWeightB0(delay, i);
 			bbdIn += zStates2In[i] * calculateInputWeightB1(delay, i);
 		}
@@ -903,11 +893,11 @@ struct BBD {
 
 	void processInputNative(T input) {
 
-		for (int i = 0; i < numRealIn; i++) {
+		for (int i = 0; i < R_IN; i++) {
 			updateInputStateR(input, i);
 		}
 
-		for (int i = 0; i < numConjIn; i++) {
+		for (int i = 0; i < C_IN; i++) {
 			updateInputStateZ(input, i);
 		}
 		
@@ -920,11 +910,11 @@ struct BBD {
 
 	void processOutputBBDLin(T input, float delay) {
 
-		for (int i = 0; i < numRealOut; i++) {
+		for (int i = 0; i < R_OUT; i++) {
 			realStatesOut[i] += input * getWeightLin(delay, outputWeightR[i]);
 		}
 
-		for (int i = 0; i < numConjOut; i++) {
+		for (int i = 0; i < C_OUT; i++) {
 			zStates1Out[i] += input * getWeightLin(delay, outputWeightB0[i]);
 			zStates2Out[i] += input * getWeightLin(delay, outputWeightB1[i]);
 		}
@@ -933,11 +923,11 @@ struct BBD {
 
 	void processOutputBBDPure(T input, float delay) {
 
-		for (int i = 0; i < numRealOut; i++) {
+		for (int i = 0; i < R_OUT; i++) {
 			realStatesOut[i] += input * calculateOutputWeightR(delay, i);
 		}
 
-		for (int i = 0; i < numConjOut; i++) {
+		for (int i = 0; i < C_OUT; i++) {
 			zStates1Out[i] += input * calculateOutputWeightB0(delay, i);
 			zStates2Out[i] += input * calculateOutputWeightB1(delay, i);
 		}
@@ -948,12 +938,12 @@ struct BBD {
 
 		T output = lastOut;
 
-		for (int i = 0; i < numRealOut; i++) {
+		for (int i = 0; i < R_OUT; i++) {
 			output += realStatesOut[i];
 			updateOutputStateR(i);
 		}
 
-		for (int i = 0; i < numConjOut; i++) {
+		for (int i = 0; i < C_OUT; i++) {
 			output += zStates1Out[i];
 			updateOutputStateZ(i);
 		}
@@ -995,6 +985,9 @@ struct BBD {
 	float nativeTimeIndex = 0;
 	float bbdTimeIndex = 0;
 	int32_t bbdStepTracker = 0; 
+
+	int oversample;
+	T * inputs;
 
 	// maintain the bucket brigade at the variable sample rate and the filter states at the main sample rate
 
@@ -1088,8 +1081,8 @@ struct BBD {
 
 	BBD() {
 
-		initInputFilter(_DEFAULT_REAL_SECTIONS, _DEFAULT_CONJ_SECTIONS);
-		initOutputFilter(_DEFAULT_REAL_SECTIONS, _DEFAULT_CONJ_SECTIONS);
+		initInputFilter();
+		initOutputFilter();
 		initLUT();
 
 		for (int i = 0; i < SIZE; i++) {
