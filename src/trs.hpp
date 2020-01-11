@@ -438,6 +438,12 @@ struct ZDFSVF {
 
 	}
 
+	T zenerClipper(T in) {
+		T out = ifelse((in < T(-1.f)), T(-4.f / 5.f), (in - in * in * in * in * in / T(5.f)));
+		return ifelse((in < T(1.f)), out, T(4.f / 5.f));
+		// return in;
+	}
+
 	void process(T in) {
 
 		lpOut = in * DLPz + X[0] * CLPz[0] + X[1] * CLPz[1];
@@ -447,7 +453,7 @@ struct ZDFSVF {
 		T X0 = in * Bz[0] + X[0] * Az[0] + X[1] * Az[1];
 		T X1 = in * Bz[1] + X[0] * Az[2] + X[1] * Az[3];
 
-		X[0] = X0;
+		X[0] = zenerClipper(X0 / T(7.f)) * T(7.f);
 		X[1] = X1;
 
 	}

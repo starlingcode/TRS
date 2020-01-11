@@ -8,6 +8,7 @@ struct TRSVCF : Module {
     };
     enum InputIds {
         IN_INPUT,
+        NORM_INPUT,
         LIN_INPUT,
         EXP_INPUT,
         RES_INPUT,
@@ -24,6 +25,7 @@ struct TRSVCF : Module {
     };
 
     StereoInHandler signalIn;
+    StereoInHandler normIn;
     StereoInHandler linCV;
     StereoInHandler expoCV;
     StereoInHandler resCV;
@@ -38,6 +40,7 @@ struct TRSVCF : Module {
         configParam(RES_PARAM, 0.f, 1.f, 0.f, "");
 
         signalIn.configure(&inputs[IN_INPUT]);
+        normIn.configure(&inputs[NORM_INPUT]);
         linCV.configure(&inputs[LIN_INPUT]);
         expoCV.configure(&inputs[EXP_INPUT]);
         resCV.configure(&inputs[RES_INPUT]);
@@ -67,10 +70,13 @@ struct TRSVCF : Module {
 
             float_4 res = (resCV.getLeft(polyChunk) / float_4(10.f));
             res += float_4(params[RES_PARAM].getValue());
-            res = clamp(res, 0.f, 0.9999f);
+            res = clamp(res, 0.f, 1.f);
+            res = dsp::approxExp2_taylor5((float_4(1.f) - res) * float_4(8.f)) / float_4(256.f);
+            res = float_4(1.f) - res;
 
             filters[0][polyChunk].setParams(freql, res);
-            filters[0][polyChunk].process(signalIn.getLeft());
+            float_4 in = signalIn.getLeft() + normIn.getLeft() * (float_4(1.f) - (res * float_4(.9f)));
+            filters[0][polyChunk].process(in);
 
             hpOut.setLeft(filters[0][polyChunk].hpOut, polyChunk);
             bpOut.setLeft(filters[0][polyChunk].bpOut, polyChunk);
@@ -83,10 +89,13 @@ struct TRSVCF : Module {
 
             res = (resCV.getRight(polyChunk) / float_4(10.f));
             res += float_4(params[RES_PARAM].getValue());
-            res = clamp(res, 0.f, 0.9999f);
+            res = clamp(res, 0.f, 1.f);
+            res = dsp::approxExp2_taylor5((float_4(1.f) - res) * float_4(8.f)) / float_4(256.f);
+            res = float_4(1.f) - res;
 
             filters[1][polyChunk].setParams(freqr, res);
-            filters[1][polyChunk].process(signalIn.getRight());
+            in = signalIn.getRight() + normIn.getRight() * (float_4(1.f) - (res * float_4(.9f)));
+            filters[1][polyChunk].process(in);
 
             hpOut.setRight(filters[1][polyChunk].hpOut, polyChunk);
             bpOut.setRight(filters[1][polyChunk].bpOut, polyChunk);
@@ -111,7 +120,8 @@ struct TRSVCFWidget : ModuleWidget {
         addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 17.609)), module, TRSVCF::FREQ_PARAM));
         addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 41.109)), module, TRSVCF::RES_PARAM));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.364, 71.496)), module, TRSVCF::IN_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(8.95, 71.496)), module, TRSVCF::IN_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(21.777, 71.496)), module, TRSVCF::NORM_INPUT));
         addInput(createInputCentered<HexJack>(mm2px(Vec(8.95, 85.501)), module, TRSVCF::LIN_INPUT));
         addInput(createInputCentered<HexJack>(mm2px(Vec(8.952, 99.498)), module, TRSVCF::EXP_INPUT));
         addInput(createInputCentered<HexJack>(mm2px(Vec(8.952, 113.499)), module, TRSVCF::RES_INPUT));
