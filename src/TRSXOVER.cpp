@@ -43,8 +43,8 @@ struct TRSXOVER : Module {
 
         for (int polyChunk = 0; polyChunk < 2; polyChunk ++) {
 
-            filters[0][polyChunk].process(params[FREQ_PARAM].getValue(), 0.f, in.getLeft(polyChunk), 0.f, 0.f, 0.f);
-            filters[1][polyChunk].process(params[FREQ_PARAM].getValue(), 0.f, in.getRight(polyChunk), 0.f, 0.f, 0.f);
+            filters[0][polyChunk].process(params[FREQ_PARAM].getValue(), .75f, in.getLeft(polyChunk), 0.f, 0.f, 0.f);
+            filters[1][polyChunk].process(params[FREQ_PARAM].getValue(), .75f, in.getRight(polyChunk), 0.f, 0.f, 0.f);
 
             high.setLeft(filters[0][polyChunk].hpOut, polyChunk);
             high.setRight(filters[1][polyChunk].hpOut, polyChunk);

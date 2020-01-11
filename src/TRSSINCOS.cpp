@@ -86,9 +86,11 @@ struct TRSSINCOS : Module {
 
             // scale -5 to -5 to -2 to -2
             in *= float_4(2.f / 5.f);
+            // cos
+            in += float_4(.5f);
             upsamplers[1][polyChunk].process(in);
             for (int i = 0; i < SINCOS_OVERSAMPLE; i++) {
-                in = upsamplers[0][polyChunk].output[i];
+                in = upsamplers[1][polyChunk].output[i];
                 int32_4 phaseHalf = abs((int32_4) floor(in));
                 phaseHalf &= int32_4(1);
                 float_4 sign = float_4(1.f) - (float_4(2.f) * float_4(phaseHalf));
