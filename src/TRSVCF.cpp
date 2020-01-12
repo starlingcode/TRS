@@ -52,6 +52,14 @@ struct TRSVCF : Module {
     }
 
     ZDFSVF<float_4> filters[2][2];
+    UpsamplePow2<4, float_4> up[2][2];
+    DecimatePow2<4, float_4> downLP[2][2];
+    DecimatePow2<4, float_4> downBP[2][2];
+    DecimatePow2<4, float_4> downHP[2][2];
+
+    float_4 workLP[4];
+    float_4 workBP[4];
+    float_4 workHP[4];   
 
     void process(const ProcessArgs &args) override {
 
@@ -72,10 +80,22 @@ struct TRSVCF : Module {
             res += float_4(params[RES_PARAM].getValue());
             res = clamp(res, 0.f, 1.f);
             res = dsp::approxExp2_taylor5((float_4(1.f) - res) * float_4(8.f)) / float_4(256.f);
-            res = float_4(1.f) - res;
+            res = float_4(1.f) - res + float_4(1.f/256.f);
 
             filters[0][polyChunk].setParams(freql, res);
             float_4 in = signalIn.getLeft() + normIn.getLeft() * (float_4(1.f) - (res * float_4(.9f)));
+            // up[0][polyChunk].process(in);
+            // for (int i = 0; i < 4; i++) {
+            //     filters[0][polyChunk].process(up[0][polyChunk].output[i]);
+            //     workLP[i] = filters[0][polyChunk].lpOut;
+            //     workBP[i] = filters[0][polyChunk].bpOut;
+            //     workHP[i] = filters[0][polyChunk].hpOut;
+            // }
+
+            // hpOut.setLeft(downLP[0][polyChunk].process(workLP), polyChunk);
+            // bpOut.setLeft(downBP[0][polyChunk].process(workBP), polyChunk);
+            // lpOut.setLeft(downHP[0][polyChunk].process(workHP), polyChunk);
+
             filters[0][polyChunk].process(in);
 
             hpOut.setLeft(filters[0][polyChunk].hpOut, polyChunk);
@@ -91,10 +111,22 @@ struct TRSVCF : Module {
             res += float_4(params[RES_PARAM].getValue());
             res = clamp(res, 0.f, 1.f);
             res = dsp::approxExp2_taylor5((float_4(1.f) - res) * float_4(8.f)) / float_4(256.f);
-            res = float_4(1.f) - res;
+            res = float_4(1.f) - res + float_4(1.f/256.f);
 
             filters[1][polyChunk].setParams(freqr, res);
             in = signalIn.getRight() + normIn.getRight() * (float_4(1.f) - (res * float_4(.9f)));
+            // up[1][polyChunk].process(in);
+            // for (int i = 0; i < 4; i++) {
+            //     filters[1][polyChunk].process(up[1][polyChunk].output[i]);
+            //     workLP[i] = filters[1][polyChunk].lpOut;
+            //     workBP[i] = filters[1][polyChunk].bpOut;
+            //     workHP[i] = filters[1][polyChunk].hpOut;
+            // }
+
+            // hpOut.setRight(downLP[1][polyChunk].process(workLP), polyChunk);
+            // bpOut.setRight(downBP[1][polyChunk].process(workBP), polyChunk);
+            // lpOut.setRight(downHP[1][polyChunk].process(workHP), polyChunk);
+
             filters[1][polyChunk].process(in);
 
             hpOut.setRight(filters[1][polyChunk].hpOut, polyChunk);

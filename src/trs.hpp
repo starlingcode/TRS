@@ -65,6 +65,56 @@ struct StereoOutHandler {
 
 ////// DSP Resources
 
+template <typename T = float>
+struct TanhBL {
+
+	T lastIn = T(0);
+
+	T coshAnalytical(T in) {
+		return (exp(in) + exp(-in))/2;
+	}
+
+	T tanhAnalytical(T in) {
+		return (exp(T(2.f) * in) - 1)/(exp(T(2.f) * in) + 1);
+	}
+
+	T tanhIAnalytical(T in) {
+		return log(coshAnalytical(in));
+	}
+
+	T process(T in) {
+
+		T out = ifelse(abs(in - lastIn) < .000001f, (tanh(in) + tanh(lastIn)) / 2, (tanhI(in) - tanhI(lastIn))/(in - lastIn));
+		lastIn = in;
+		return out;
+	}
+
+};
+
+template <typename T = float>
+struct ZenerClipperBL {
+
+	T lastIn = T(0);
+
+	T clip(T in) {
+		T out = ifelse((in < T(-1.f)), T(-4.f / 5.f), (in - in * in * in * in * in / T(5.f)));
+		return ifelse((in < T(1.f)), out, T(4.f / 5.f));
+	}
+
+	T integratedClip(T in) {
+		T out = ifelse((in < T(-1.f)), T(-4.f / 5.f) * in - T(1.f/3.f), (in * in) / T(2.f) - (in * in * in * in * in * in) / T(30.f));
+		return ifelse(in < T(1.f), out, T(4.f / 5.f) * in - T(1.f/3.f));
+	}
+
+	T process(T in) {
+
+		T out = ifelse(abs(in - lastIn) < .000001f, clip((in + lastIn)/2), (integratedClip(in) - integratedClip(lastIn))/(in - lastIn));
+		lastIn = in;
+		return out;
+	}
+
+};
+
 // One pole allpass
 
 template <typename T = float>
@@ -366,6 +416,7 @@ struct JOSSVF {
 // This one can process a float_4 due to simple explicit formula for inverting 2 x 2 matrix
 // Includes some trivial modifications to https://github.com/google/music-synthesizer-for-android/blob/master/lab/Second%20order%20sections%20in%20matrix%20form.ipynb
 // for simultaineuous outputs from same state/transition matrix
+// nice and stable and linear
 
 template <typename T = float>
 struct ZDFSVF {
@@ -384,26 +435,17 @@ struct ZDFSVF {
 
 	T X[2] = {T(0.f), T(0.f)};
 
-	// analog prototype is woven into the discretization formula
-	// putting a 2 where resonance gain will eventually be inserted
-
-	// T A[4] = {2, -1
-	// 		  1, 0};
-	// T B[2] = {1, 0};
-	// T CLP[2] = {0, 1};
-	// T CBP[2] = {1, 0};
-	// T CHP[2] = {2, -1};
-	// T D = 0;
-	// T DHP = 1;
-
 	T lpOut = T(0);
 	T bpOut = T(0);
 	T hpOut = T(0);
+
+	T diodeGain = T(1.f);
 
 	void setParams(T freq, T res) {
 
 		T g = tan(T(M_PI) * freq);
     	T k = T(2.f) - T(2) * res;
+    	k *= diodeGain;
    		T a1 = T(1.f)/(T(1.f) + g * (g + k));
     	T a2 = g * a1;
    		T a3 = g * a2;
@@ -438,11 +480,7 @@ struct ZDFSVF {
 
 	}
 
-	T zenerClipper(T in) {
-		T out = ifelse((in < T(-1.f)), T(-4.f / 5.f), (in - in * in * in * in * in / T(5.f)));
-		return ifelse((in < T(1.f)), out, T(4.f / 5.f));
-		// return in;
-	}
+	ZenerClipperBL<T> clipper;
 
 	void process(T in) {
 
@@ -453,7 +491,8 @@ struct ZDFSVF {
 		T X0 = in * Bz[0] + X[0] * Az[0] + X[1] * Az[1];
 		T X1 = in * Bz[1] + X[0] * Az[2] + X[1] * Az[3];
 
-		X[0] = zenerClipper(X0 / T(7.f)) * T(7.f);
+		X[0] = clipper.clip(X0 / T(10.f)) * T(10.f);
+		// X[0] = X0;
 		X[1] = X1;
 
 	}
@@ -462,7 +501,7 @@ struct ZDFSVF {
 
 /// Delay Line
 
-template <typename T = float_4>
+template <typename T = float>
 struct Delay {
 
 	T * buffer;

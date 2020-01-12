@@ -73,6 +73,9 @@ struct TRS8NU8 : Module {
 
     }
 
+    ZenerClipperBL<float_4> shaper1[2];
+    ZenerClipperBL<float_4> shaper2[2];
+
     void process(const ProcessArgs &args) override {
 
         outputs[POS1_OUTPUT].setChannels(16);
