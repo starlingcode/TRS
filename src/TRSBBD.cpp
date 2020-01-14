@@ -90,10 +90,10 @@ struct TRSBBD : Module {
         fb = clamp(params[FEEDBACK_PARAM].getValue() + fbIn.getRight()/15.f, 0.f, .75f);
         in = signalIn.getRight() + lastR * fb;
         upsamplers[1].process(in);
-        work[0] = bbds[1].process(upsamplers[0].output[0], timeCV);
-        work[1] = bbds[1].process(upsamplers[0].output[1], timeCV);
-        work[2] = bbds[1].process(upsamplers[0].output[2], timeCV);
-        work[3] = bbds[1].process(upsamplers[0].output[3], timeCV);
+        work[0] = bbds[1].process(upsamplers[1].output[0], timeCV);
+        work[1] = bbds[1].process(upsamplers[1].output[1], timeCV);
+        work[2] = bbds[1].process(upsamplers[1].output[2], timeCV);
+        work[3] = bbds[1].process(upsamplers[1].output[3], timeCV);
         out = decimators[1].process(work);
         // out = bbds[1].process(in, timeCV);
         lastR = out;
