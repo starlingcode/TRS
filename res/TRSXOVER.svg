@@ -15,7 +15,7 @@
    viewBox="0 0 20.320049 128.5007"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.2 5c3e80d, 2017-08-06"
+   inkscape:version="0.92.4 (unknown)"
    sodipodi:docname="TRSXOVER.svg">
   <defs
      id="defs2">
@@ -1866,9 +1866,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994949"
-     inkscape:cx="-333.59636"
-     inkscape:cy="247.72296"
+     inkscape:zoom="2.8"
+     inkscape:cx="96.497367"
+     inkscape:cy="329.69217"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -1878,10 +1878,10 @@
      inkscape:guide-bbox="true"
      inkscape:snap-grids="false"
      inkscape:snap-object-midpoints="true"
-     inkscape:window-width="1440"
-     inkscape:window-height="811"
-     inkscape:window-x="0"
-     inkscape:window-y="1"
+     inkscape:window-width="1873"
+     inkscape:window-height="1056"
+     inkscape:window-x="47"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      inkscape:snap-bbox-edge-midpoints="true"
      inkscape:object-paths="true"
@@ -1971,6 +1971,35 @@
        orientation="0,1"
        id="guide29194"
        inkscape:locked="false" />
+    <sodipodi:guide
+       position="14.691945,125.5"
+       orientation="0,1"
+       id="guide27299"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,0,255)" />
+    <sodipodi:guide
+       position="2.8635236,127.71644"
+       orientation="0,1"
+       id="guide27309"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="2.0859551,128.5"
+       orientation="1,0"
+       id="guide27311"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="8.0752863,128.49527"
+       orientation="1,0"
+       id="guide27313"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="20.32,3"
+       orientation="0,1"
+       id="guide27315"
+       inkscape:locked="false"
+       inkscape:label=""
+       inkscape:color="rgb(0,0,255)" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
@@ -2535,7 +2564,7 @@
        height="128.5"
        width="20.320049"
        id="rect11737-6"
-       style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.25;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+       style="opacity:1;vector-effect:none;fill:#074e7b;fill-opacity:1;stroke:none;stroke-width:0.25;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
        inkscape:export-filename="/home/user/g12323-5-2.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -2554,7 +2583,7 @@
          cy="-63.839233"
          cx="-195.30733"
          id="circle11927-1"
-         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:3.90430832;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#074e7b;stroke-width:3.90430832;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <path
          inkscape:export-filename="/home/user/Desktop/logo_test3.png"
          inkscape:export-ydpi="300"
@@ -2563,7 +2592,7 @@
          inkscape:connector-curvature="0"
          id="path11929-0"
          d="m -229.89361,-89.873887 47.77587,-42.384763 18.29105,78.105054 z"
-         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:5.85704803;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+         style="opacity:1;fill:#074e7b;fill-opacity:1;stroke:#074e7b;stroke-width:5.85704803;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <path
          inkscape:export-filename="/home/user/Desktop/logo_test3.png"
          inkscape:export-ydpi="300"
@@ -2572,7 +2601,7 @@
          inkscape:connector-curvature="0"
          id="path11931-5"
          d="m -238.29526,-82.420258 v 0 l 101.17991,55.091324 h -70.67953 l -30.50038,-55.091324"
-         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:5.85704851;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+         style="opacity:1;fill:#074e7b;fill-opacity:1;stroke:#074e7b;stroke-width:5.85704851;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <path
          inkscape:export-ydpi="300"
          inkscape:export-xdpi="300"
@@ -2581,7 +2610,7 @@
          inkscape:connector-curvature="0"
          id="path11933-3"
          d="m -246.50353,-75.138279 11.91297,21.706467 h -30.79324 z"
-         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:5.85704851;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+         style="opacity:1;fill:#074e7b;fill-opacity:1;stroke:#074e7b;stroke-width:5.85704851;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <path
          inkscape:export-ydpi="300"
          inkscape:export-xdpi="300"
@@ -2601,14 +2630,6 @@
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
     <path
-       id="path11941-9"
-       d="m 551.5971,170.37338 h 3.14965 a 1.800379,1.800379 0 1 1 0,3.59998 h -3.14965 a 1.800379,1.800379 0 1 1 0,-3.59998 z"
-       style="display:inline;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.28222218;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       inkscape:connector-curvature="0"
-       inkscape:export-filename="/home/user/g12323-5-2.png"
-       inkscape:export-xdpi="300"
-       inkscape:export-ydpi="300" />
-    <path
        id="path11943-7"
        d="m 532.27507,292.04337 h 3.14964 a 1.800379,1.800379 0 1 1 0,3.59998 h -3.14964 a 1.800379,1.800379 0 1 1 0,-3.59998 z"
        style="display:inline;opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.28222218;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -2616,58 +2637,48 @@
        inkscape:export-filename="/home/user/g12323-5-2.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
-    <path
-       id="path11945-6"
-       d="m 551.26437,292.12006 h 3.14964 a 1.800379,1.800379 0 1 1 0,3.59998 h -3.14964 a 1.800379,1.800379 0 1 1 0,-3.59998 z"
-       style="display:inline;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.28222218;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       inkscape:connector-curvature="0"
-       inkscape:export-filename="/home/user/g12323-5-2.png"
-       inkscape:export-xdpi="300"
-       inkscape:export-ydpi="300" />
     <g
-       transform="matrix(0.59104882,0,0,0.59104882,508.70434,54.473209)"
-       id="g11959-8"
-       inkscape:export-filename="/home/user/g12323-5-2.png"
-       inkscape:export-xdpi="300"
-       inkscape:export-ydpi="300">
+       id="g27307"
+       transform="translate(0,-0.08953875)">
       <ellipse
-         style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.99994034;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+         style="opacity:1;vector-effect:none;fill:#074e7b;fill-opacity:1;stroke:#ffffff;stroke-width:0.59101355;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
          id="ellipse11947-2"
-         cx="58.9725"
-         cy="198.14999"
-         rx="4.5000296"
-         ry="4.50003" />
+         cx="543.55994"
+         cy="171.58952"
+         rx="2.6597371"
+         ry="2.6597373" />
       <ellipse
-         ry="3.3750224"
-         rx="3.3750222"
-         cy="198.14999"
-         cx="58.9725"
+         ry="1.9948031"
+         rx="1.9948028"
+         cy="171.58952"
+         cx="543.55994"
          id="ellipse11949-0"
-         style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.74995524;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill" />
+         style="opacity:1;vector-effect:none;fill:#074e7b;fill-opacity:1;stroke:#ffffff;stroke-width:0.44326016;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill" />
       <ellipse
-         style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.56246644;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+         style="opacity:1;vector-effect:none;fill:#074e7b;fill-opacity:1;stroke:#ffffff;stroke-width:0.33244511;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
          id="ellipse11951-6"
-         cx="58.9725"
-         cy="198.14999"
-         rx="2.5312667"
-         ry="2.5312669" />
+         cx="543.55994"
+         cy="171.58952"
+         rx="1.4961022"
+         ry="1.4961023" />
       <ellipse
-         ry="1.8984501"
-         rx="1.89845"
-         cy="198.14999"
-         cx="58.9725"
+         ry="1.1220767"
+         rx="1.1220766"
+         cy="171.58952"
+         cx="543.55994"
          id="ellipse11953-4"
-         style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.42184982;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill" />
+         style="opacity:1;vector-effect:none;fill:#074e7b;fill-opacity:1;stroke:#ffffff;stroke-width:0.24933384;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill" />
       <path
-         style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
-         d="m 58.9725,198.14999 -5.228387,5.22839 h 10.45677 z"
+         style="opacity:1;vector-effect:none;fill:#074e7b;fill-opacity:1;stroke:none;stroke-width:0.59104884;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+         d="m 543.55997,171.58953 -3.09024,3.09023 h 6.18047 z"
          id="path11955-3"
          inkscape:connector-curvature="0" />
       <path
-         style="opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
-         d="m 58.9725,198.14999 -5.228387,-5.22839 h 10.45677 z"
+         style="opacity:1;vector-effect:none;fill:#074e7b;fill-opacity:1;stroke:none;stroke-width:0.59104884;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+         d="m 543.55997,171.58953 -2.24754,-2.24754 -0.74649,-0.75246 5.98933,0 -0.7371,0.74179 z"
          id="path11957-3"
-         inkscape:connector-curvature="0" />
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="cccccc" />
     </g>
     <g
        aria-label="XOVER"
