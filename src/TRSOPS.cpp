@@ -1,7 +1,7 @@
 #include "trs.hpp"
 
 
-struct AddSub : Module {
+struct TRSOPS : Module {
     enum ParamIds {
         NUM_PARAMS
     };
@@ -41,7 +41,7 @@ struct AddSub : Module {
     StereoOutHandler stereo56Out;
     StereoOutHandler stereo78Out;
 
-    AddSub() {
+    TRSOPS() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
         stereo1In.configure(&inputs[IN1_INPUT]);
@@ -65,13 +65,24 @@ struct AddSub : Module {
         for (int polyChunk = 0; polyChunk < 2; polyChunk++) {
 
             stereo12Out.setLeft(stereo1In.getLeft() + stereo2In.getLeft(), polyChunk);
+
             stereo12Out.setRight(stereo1In.getRight() + stereo2In.getRight(), polyChunk);
+
             stereo34Out.setLeft(stereo3In.getLeft() + stereo4In.getLeft(), polyChunk);
+
             stereo34Out.setRight(stereo3In.getRight() + stereo4In.getRight(), polyChunk);
-            stereo56Out.setLeft(stereo5In.getLeft() - stereo6In.getLeft(), polyChunk);
-            stereo56Out.setRight(stereo5In.getRight() - stereo6In.getRight(), polyChunk);
-            stereo78Out.setLeft(stereo7In.getLeft() - stereo8In.getLeft(), polyChunk);
-            stereo78Out.setRight(stereo7In.getRight() - stereo8In.getRight(), polyChunk);
+
+            float_4 cv = clamp(float_4(.0f), float_4(5.f), stereo6In.getLeft()/5.f); 
+            stereo56Out.setLeft((stereo5In.getLeft() * cv), polyChunk);
+
+            cv = clamp(float_4(.0f), float_4(5.f), stereo6In.getRight()/5.f); 
+            stereo56Out.setRight((stereo5In.getRight() * cv), polyChunk);
+
+            cv = clamp(float_4(.0f), float_4(5.f), stereo8In.getLeft()/5.f); 
+            stereo78Out.setLeft((stereo7In.getLeft() * cv), polyChunk);
+            
+            cv = clamp(float_4(.0f), float_4(5.f), stereo8In.getRight()/5.f); 
+            stereo78Out.setRight((stereo7In.getRight() * cv), polyChunk);
 
         }
 
@@ -84,31 +95,31 @@ struct AddSub : Module {
 };
 
 
-struct AddSubWidget : ModuleWidget {
-    AddSubWidget(AddSub *module) {
+struct TRSOPSWidget : ModuleWidget {
+    TRSOPSWidget(TRSOPS *module) {
         setModule(module);
-        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/AddSub.svg")));
+        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TRSOPS.svg")));
 
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH/2, 0)));
         // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH/2, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 15.247)), module, AddSub::IN1_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 15.247)), module, AddSub::IN2_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 43.822)), module, AddSub::IN3_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 43.822)), module, AddSub::IN4_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 84.747)), module, AddSub::IN5_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 84.747)), module, AddSub::IN6_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 113.247)), module, AddSub::IN7_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 113.247)), module, AddSub::IN8_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 15.247)), module, TRSOPS::IN1_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 15.247)), module, TRSOPS::IN2_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.407, 43.822)), module, TRSOPS::IN3_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.461, 43.822)), module, TRSOPS::IN4_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 84.747)), module, TRSOPS::IN5_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 84.747)), module, TRSOPS::IN6_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.406, 113.247)), module, TRSOPS::IN7_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.46, 113.247)), module, TRSOPS::IN8_INPUT));
 
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 27.8)), module, AddSub::OUT12_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 56.375)), module, AddSub::OUT34_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 72.25)), module, AddSub::OUT56_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 100.75)), module, AddSub::OUT78_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 27.8)), module, TRSOPS::OUT12_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 56.375)), module, TRSOPS::OUT34_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 72.25)), module, TRSOPS::OUT56_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.401, 100.75)), module, TRSOPS::OUT78_OUTPUT));
     }
 };
 
 
-Model *modelAddSub = createModel<AddSub, AddSubWidget>("AddSub");
+Model *modelTRSOPS = createModel<TRSOPS, TRSOPSWidget>("TRSOPS");

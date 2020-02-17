@@ -1,10 +1,12 @@
 #include "trs.hpp"
 
 
-struct QuadLFO : Module {
+struct TRSSPIN : Module {
     enum ParamIds {
         RATE1_PARAM,
         RATE2_PARAM,
+        RATE1_ATTEN_PARAM,
+        RATE2_ATTEN_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -15,8 +17,6 @@ struct QuadLFO : Module {
     enum OutputIds {
         OUT1POS_OUTPUT,
         OUT1NEG_OUTPUT,
-        OUT12NEG_OUTPUT,
-        OUT12POS_OUTPUT,
         OUT2NEG_OUTPUT,
         OUT2POS_OUTPUT,
         NUM_OUTPUTS
@@ -32,16 +32,16 @@ struct QuadLFO : Module {
     StereoOutHandler topLFO34Out;
     StereoOutHandler bottomLFO12Out;
     StereoOutHandler bottomLFO34Out;
-    StereoOutHandler mixLFO12Out;
-    StereoOutHandler mixLFO34Out;
 
     float_4 topLFOLeadPhase[2] = {float_4(0), float_4(1)};
     float_4 bottomLFOLeadPhase[2] = {float_4(0), float_4(1)};
 
-    QuadLFO() {
+    TRSSPIN() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(RATE1_PARAM, .0f, 12.f, 0.f, "");
         configParam(RATE2_PARAM, .0f, 12.f, 0.f, "");
+        configParam(RATE1_ATTEN_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(RATE2_ATTEN_PARAM, 0.f, 1.f, 0.f, "");
 
         topLFORate.configure(&inputs[RATE1_INPUT]);
         bottomLFORate.configure(&inputs[RATE2_INPUT]);
@@ -49,9 +49,8 @@ struct QuadLFO : Module {
         topLFO12Out.configure(&outputs[OUT1POS_OUTPUT]);
         topLFO34Out.configure(&outputs[OUT1NEG_OUTPUT]);
         bottomLFO12Out.configure(&outputs[OUT2POS_OUTPUT]);
-        bottomLFO34Out.configure(&outputs[OUT2POS_OUTPUT]);
-        mixLFO12Out.configure(&outputs[OUT12POS_OUTPUT]);
-        mixLFO34Out.configure(&outputs[OUT12NEG_OUTPUT]);
+        bottomLFO34Out.configure(&outputs[OUT2NEG_OUTPUT]);
+
     }
 
     void process(const ProcessArgs &args) override {
@@ -66,11 +65,11 @@ struct QuadLFO : Module {
             float_4 topPhase = topLFOLeadPhase[polyChunk];
             float_4 bottomPhase = bottomLFOLeadPhase[polyChunk];
 
-            float_4 rate = dsp::approxExp2_taylor5(topLFORate.getLeft(polyChunk) + float_4(5.f)) * baseRateTop / float_4(32.f);
+            float_4 rate = dsp::approxExp2_taylor5(topLFORate.getLeft(polyChunk) * params[RATE1_ATTEN_PARAM].getValue() + float_4(5.f)) * baseRateTop / float_4(32.f);
             topPhase += rate;
             topPhase -= (topPhase >= 1.f) & 1.f;
 
-            rate = dsp::approxExp2_taylor5(bottomLFORate.getLeft(polyChunk) + float_4(5.f)) * baseRateBottom / float_4(32.f);
+            rate = dsp::approxExp2_taylor5(bottomLFORate.getLeft(polyChunk) * params[RATE2_ATTEN_PARAM].getValue() + float_4(5.f)) * baseRateBottom / float_4(32.f);
             bottomPhase += rate;
             bottomPhase -= (bottomPhase >= 1.f) & 1.f;
 
@@ -83,10 +82,11 @@ struct QuadLFO : Module {
             float_4 bottomQuadrature = bottomPhase + float_4(.25f);
             bottomQuadrature -= (bottomQuadrature >= 1.f) & 1.f;
 
-            topPhase = simd::sin(2 * M_PI * topPhase) * 5.f;
-            topQuadrature = simd::sin(2 * M_PI * topQuadrature) * 5.f;
-            bottomPhase = simd::sin(2 * M_PI * bottomPhase) * 5.f;
-            bottomQuadrature = simd::sin(2 * M_PI * bottomQuadrature) * 5.f;
+            // replace with approx
+            topPhase = bhaskaraSine(topPhase * float_4(2.f) - float_4(1.f)) * 5.f;
+            topQuadrature = bhaskaraSine(topQuadrature * float_4(2.f) - float_4(1.f)) * 5.f;
+            bottomPhase = bhaskaraSine(bottomPhase * float_4(2.f) - float_4(1.f)) * 5.f;
+            bottomQuadrature = bhaskaraSine(bottomQuadrature * float_4(2.f) - float_4(1.f)) * 5.f;
 
             topLFO12Out.setLeft(topPhase, polyChunk);
             topLFO12Out.setRight(topQuadrature, polyChunk);
@@ -98,48 +98,40 @@ struct QuadLFO : Module {
             bottomLFO34Out.setLeft(-bottomPhase, polyChunk);
             bottomLFO34Out.setRight(-bottomQuadrature, polyChunk);
 
-            mixLFO12Out.setLeft(topPhase, polyChunk);
-            mixLFO12Out.setRight(bottomPhase, polyChunk);
-            mixLFO34Out.setLeft(topQuadrature, polyChunk);
-            mixLFO34Out.setRight(bottomQuadrature, polyChunk);
-
         }
 
         outputs[OUT1POS_OUTPUT].setChannels(16);
         outputs[OUT2POS_OUTPUT].setChannels(16);
         outputs[OUT1NEG_OUTPUT].setChannels(16);
         outputs[OUT2NEG_OUTPUT].setChannels(16);
-        outputs[OUT12POS_OUTPUT].setChannels(16);
-        outputs[OUT12NEG_OUTPUT].setChannels(16);
 
     }
 };
 
 
-struct QuadLFOWidget : ModuleWidget {
-    QuadLFOWidget(QuadLFO *module) {
+struct TRSSPINWidget : ModuleWidget {
+    TRSSPINWidget(TRSSPIN *module) {
         setModule(module);
-        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/QuadLFO.svg")));
+        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TRSSPIN.svg")));
 
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<SifamGrey>(mm2px(Vec(14.363, 17.609)), module, QuadLFO::RATE1_PARAM));
-        addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.24, 105.246)), module, QuadLFO::RATE2_PARAM));
+        addParam(createParamCentered<SifamGrey>(mm2px(Vec(14.363, 35.878)), module, TRSSPIN::RATE1_PARAM));
+        addParam(createParamCentered<Trimpot>(mm2px(Vec(8.311, 50.527)), module, TRSSPIN::RATE1_ATTEN_PARAM));
+        addParam(createParamCentered<Trimpot>(mm2px(Vec(21.168, 76.262)), module, TRSSPIN::RATE2_ATTEN_PARAM));
+        addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.295, 91.258)), module, TRSSPIN::RATE2_PARAM));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(14.74, 48.541)), module, QuadLFO::RATE1_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.24, 74.313)), module, QuadLFO::RATE2_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(21.168, 56.468)), module, TRSSPIN::RATE1_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(8.311, 71.34)), module, TRSSPIN::RATE2_INPUT));
 
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.561, 34.542)), module, QuadLFO::OUT1POS_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.168, 34.544)), module, QuadLFO::OUT1NEG_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.168, 61.254)), module, QuadLFO::OUT12NEG_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.311, 61.325)), module, QuadLFO::OUT12POS_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.168, 88.242)), module, QuadLFO::OUT2NEG_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.311, 88.313)), module, QuadLFO::OUT2POS_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.311, 15.489)), module, TRSSPIN::OUT1POS_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.168, 15.489)), module, TRSSPIN::OUT1NEG_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.311, 113.496)), module, TRSSPIN::OUT2POS_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.168, 113.496)), module, TRSSPIN::OUT2NEG_OUTPUT));
     }
 };
 
-
-Model *modelQuadLFO = createModel<QuadLFO, QuadLFOWidget>("QuadLFO");
+Model *modelTRSSPIN = createModel<TRSSPIN, TRSSPINWidget>("TRSSPIN");

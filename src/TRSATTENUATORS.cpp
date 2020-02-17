@@ -1,7 +1,7 @@
 #include "trs.hpp"
 
 
-struct TRS8NU8 : Module {
+struct TRSATTENUATORS : Module {
     enum ParamIds {
         ATT1_PARAM,
         ATTL2_PARAM,
@@ -47,7 +47,7 @@ struct TRS8NU8 : Module {
     StereoOutHandler out3Inv;
     StereoOutHandler out4Inv;
 
-    TRS8NU8() {
+    TRSATTENUATORS() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(ATT1_PARAM, 0.f, 1.f, 0.f, "");
         configParam(ATTL2_PARAM, 0.f, 1.f, 0.f, "");
@@ -124,38 +124,38 @@ struct TRS8NU8 : Module {
 };
 
 
-struct TRS8NU8Widget : ModuleWidget {
-    TRS8NU8Widget(TRS8NU8 *module) {
+struct TRSATTENUATORSWidget : ModuleWidget {
+    TRSATTENUATORSWidget(TRSATTENUATORS *module) {
         setModule(module);
-        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TRS8NU8.svg")));
+        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TRSATTENUATORS.svg")));
 
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(38.922, 22.451)), module, TRS8NU8::ATT1_PARAM));
-        addParam(createParamCentered<Trimpot>(mm2px(Vec(6.983, 45.603)), module, TRS8NU8::ATTL2_PARAM));
-        addParam(createParamCentered<Trimpot>(mm2px(Vec(16.433, 55.619)), module, TRS8NU8::ATTR2_PARAM));
-        addParam(createParamCentered<Trimpot>(mm2px(Vec(6.983, 72.77)), module, TRS8NU8::ATTL3_PARAM));
-        addParam(createParamCentered<Trimpot>(mm2px(Vec(16.385, 82.786)), module, TRS8NU8::ATTR3_PARAM));
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(38.978, 106.573)), module, TRS8NU8::ATT4_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(38.922, 22.451)), module, TRSATTENUATORS::ATT1_PARAM));
+        addParam(createParamCentered<Trimpot>(mm2px(Vec(6.983, 45.603)), module, TRSATTENUATORS::ATTL2_PARAM));
+        addParam(createParamCentered<Trimpot>(mm2px(Vec(16.433, 55.619)), module, TRSATTENUATORS::ATTR2_PARAM));
+        addParam(createParamCentered<Trimpot>(mm2px(Vec(6.983, 72.77)), module, TRSATTENUATORS::ATTL3_PARAM));
+        addParam(createParamCentered<Trimpot>(mm2px(Vec(16.385, 82.786)), module, TRSATTENUATORS::ATTR3_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(38.978, 106.573)), module, TRSATTENUATORS::ATT4_PARAM));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(9.307, 22.485)), module, TRS8NU8::IN1_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(29.903, 50.498)), module, TRS8NU8::IN2_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(29.903, 78.495)), module, TRS8NU8::IN3_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(9.307, 106.502)), module, TRS8NU8::IN4_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(9.307, 22.485)), module, TRSATTENUATORS::IN1_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(29.903, 50.498)), module, TRSATTENUATORS::IN2_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(29.903, 78.495)), module, TRSATTENUATORS::IN3_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(9.307, 106.502)), module, TRSATTENUATORS::IN4_INPUT));
 
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.568, 15.485)), module, TRS8NU8::POS1_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.567, 29.477)), module, TRS8NU8::NEG1_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 43.498)), module, TRS8NU8::POS2_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 57.491)), module, TRS8NU8::NEG2_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 71.495)), module, TRS8NU8::POS3_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 85.487)), module, TRS8NU8::NEG3_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.568, 99.502)), module, TRS8NU8::POS4_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.567, 113.495)), module, TRS8NU8::NEG4_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.568, 15.485)), module, TRSATTENUATORS::POS1_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.567, 29.477)), module, TRSATTENUATORS::NEG1_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 43.498)), module, TRSATTENUATORS::POS2_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 57.491)), module, TRSATTENUATORS::NEG2_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 71.495)), module, TRSATTENUATORS::POS3_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(42.164, 85.487)), module, TRSATTENUATORS::NEG3_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.568, 99.502)), module, TRSATTENUATORS::POS4_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.567, 113.495)), module, TRSATTENUATORS::NEG4_OUTPUT));
     }
 };
 
 
-Model *modelTRS8NU8 = createModel<TRS8NU8, TRS8NU8Widget>("TRS8NU8");
+Model *modelTRSATTENUATORS = createModel<TRSATTENUATORS, TRSATTENUATORSWidget>("TRSATTENUATORS");

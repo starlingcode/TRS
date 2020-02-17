@@ -58,7 +58,6 @@ struct TRSMS2 : Module {
         s2Out.configure(&outputs[S2_OUTPUT]);
         m2Out.configure(&outputs[M2_OUTPUT]);
         lr2Out.configure(&outputs[LR2_OUTPUT]);
-
     }
 
     void process(const ProcessArgs &args) override {
@@ -75,17 +74,23 @@ struct TRSMS2 : Module {
 
         for (int polyChunk = 0; polyChunk < 2; polyChunk++) {
 
-            s1Out.setLeft((lr1In.getLeft(polyChunk) - lr1In.getRight(polyChunk)) * _MS_SCALE, polyChunk);
-            m1Out.setLeft((lr1In.getLeft(polyChunk) + lr1In.getRight(polyChunk)) * _MS_SCALE, polyChunk);
+            float_4 s1O = (lr1In.getLeft(polyChunk) - lr1In.getRight(polyChunk)) * _MS_SCALE;
+            float_4 m1O = (lr1In.getLeft(polyChunk) + lr1In.getRight(polyChunk)) * _MS_SCALE;
 
-            s2Out.setLeft((lr2In.getLeft(polyChunk) - lr2In.getRight(polyChunk)) * _MS_SCALE, polyChunk);
-            m2Out.setLeft((lr2In.getLeft(polyChunk) + lr2In.getRight(polyChunk)) * _MS_SCALE, polyChunk);
+            s1Out.setLeft(s1O, polyChunk);
+            m1Out.setLeft(m1O, polyChunk);
 
-            lr1Out.setLeft((m1In.getLeft(polyChunk) + s1In.getLeft(polyChunk)) * _MS_SCALE, polyChunk);
-            lr1Out.setRight((m1In.getLeft(polyChunk) - s1In.getLeft(polyChunk)) * _MS_SCALE, polyChunk);
+            float_4 s2O = (lr2In.getLeft(polyChunk) - lr2In.getRight(polyChunk)) * _MS_SCALE;
+            float_4 m2O = (lr2In.getLeft(polyChunk) + lr2In.getRight(polyChunk)) * _MS_SCALE;
 
-            lr2Out.setLeft((m2In.getLeft(polyChunk) + s2In.getLeft(polyChunk)) * _MS_SCALE, polyChunk);
-            lr2Out.setRight((m2In.getLeft(polyChunk) - s2In.getLeft(polyChunk)) * _MS_SCALE, polyChunk);
+            s2Out.setLeft(s2O, polyChunk);
+            m2Out.setLeft(m2O, polyChunk);
+
+            lr1Out.setLeft((m1In.getLeftNormal(m1O, polyChunk) + s1In.getLeftNormal(s1O, polyChunk)) * _MS_SCALE, polyChunk);
+            lr1Out.setRight((m1In.getLeftNormal(m1O, polyChunk) - s1In.getLeftNormal(s1O, polyChunk)) * _MS_SCALE, polyChunk);
+
+            lr2Out.setLeft((m2In.getLeftNormal(m2O, polyChunk) + s2In.getLeftNormal(s2O, polyChunk)) * _MS_SCALE, polyChunk);
+            lr2Out.setRight((m2In.getLeftNormal(m2O, polyChunk) - s2In.getLeftNormal(s2O, polyChunk)) * _MS_SCALE, polyChunk);
 
         }
 
@@ -99,21 +104,23 @@ struct TRSMS2Widget : ModuleWidget {
         setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TRSMS2.svg")));
 
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH/2, 0)));
+        // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH/2, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.087, 25.386)), module, TRSMS2::S1_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.081, 25.389)), module, TRSMS2::M1_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(15.087, 53.609)), module, TRSMS2::S2_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(5.081, 53.612)), module, TRSMS2::M2_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(10.075, 85.481)), module, TRSMS2::LR1_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(10.075, 113.66)), module, TRSMS2::LR2_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(10.076, 15.487)), module, TRSMS2::LR1_INPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(15.087, 27.75)), module, TRSMS2::S1_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(5.081, 27.753)), module, TRSMS2::M1_OUTPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.096, 43.748)), module, TRSMS2::S1_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.09, 43.752)), module, TRSMS2::M1_INPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.085, 56.252)), module, TRSMS2::LR1_OUTPUT));
 
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.076, 15.487)), module, TRSMS2::LR1_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.076, 43.709)), module, TRSMS2::LR2_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(15.07, 75.597)), module, TRSMS2::S1_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(5.08, 75.601)), module, TRSMS2::M1_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(15.07, 103.776)), module, TRSMS2::S2_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(5.08, 103.78)), module, TRSMS2::M2_OUTPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(10.085, 72.25)), module, TRSMS2::LR2_INPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(15.096, 84.512)), module, TRSMS2::S2_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(5.107, 84.515)), module, TRSMS2::M2_OUTPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(15.08, 100.512)), module, TRSMS2::S2_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(5.09, 100.515)), module, TRSMS2::M2_INPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(10.085, 113.034)), module, TRSMS2::LR2_OUTPUT));
     }
 };
 
