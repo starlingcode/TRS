@@ -1,7 +1,7 @@
 #include "trs.hpp"
 
 
-struct TRSVCPH : Module {
+struct TRSPHASER : Module {
     enum ParamIds {
         FB_PARAM,
         MIX_PARAM,
@@ -34,7 +34,7 @@ struct TRSVCPH : Module {
 
     int use8Pole = 0;
 
-    TRSVCPH() {
+    TRSPHASER() {
 
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
         configParam(FB_PARAM, 0.f, .5f, 0.f, "");
@@ -96,33 +96,33 @@ struct TRSVCPH : Module {
 };
 
 
-struct TRSVCPHWidget : ModuleWidget {
-    TRSVCPHWidget(TRSVCPH *module) {
+struct TRSPHASERWidget : ModuleWidget {
+    TRSPHASERWidget(TRSPHASER *module) {
         setModule(module);
-        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TRSVCPH.svg")));
+        setPanel(APP->window->loadSvg(asset::plugin(pluginInstance, "res/TRSPHASER.svg")));
 
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 17.609)), module, TRSVCPH::FB_PARAM));
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 41.109)), module, TRSVCPH::MIX_PARAM));
-        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 64.609)), module, TRSVCPH::CVAMT_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 17.609)), module, TRSPHASER::FB_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 41.109)), module, TRSPHASER::MIX_PARAM));
+        addParam(createParamCentered<SifamBlack>(mm2px(Vec(15.225, 64.609)), module, TRSPHASER::CVAMT_PARAM));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(8.953, 99.471)), module, TRSVCPH::IN_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(21.777, 99.471)), module, TRSVCPH::CV_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(8.953, 99.471)), module, TRSPHASER::IN_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(21.777, 99.471)), module, TRSPHASER::CV_INPUT));
 
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.952, 113.523)), module, TRSVCPH::WET_OUTPUT));
-        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.777, 113.523)), module, TRSVCPH::MIX_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(8.952, 113.523)), module, TRSPHASER::WET_OUTPUT));
+        addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.777, 113.523)), module, TRSPHASER::MIX_OUTPUT));
     }
 
     void appendContextMenu(Menu *menu) override {
-        TRSVCPH *module = dynamic_cast<TRSVCPH*>(this->module);
+        TRSPHASER *module = dynamic_cast<TRSPHASER*>(this->module);
 
 
         struct PolesHandler : MenuItem {
-            TRSVCPH *module;
+            TRSPHASER *module;
             int32_t phaserType;
             void onAction(const event::Action &e) override {
                 module->use8Pole = phaserType;
@@ -130,7 +130,7 @@ struct TRSVCPHWidget : ModuleWidget {
         };
 
         struct PolesItem : MenuItem {
-            TRSVCPH *module;
+            TRSPHASER *module;
             Menu *createChildMenu() override {
                 Menu *menu = new Menu();
                 const std::string poles[] = {
@@ -157,4 +157,4 @@ struct TRSVCPHWidget : ModuleWidget {
 };
 
 
-Model *modelTRSVCPH = createModel<TRSVCPH, TRSVCPHWidget>("TRSVCPH");
+Model *modelTRSPHASER = createModel<TRSPHASER, TRSPHASERWidget>("TRSPHASER");

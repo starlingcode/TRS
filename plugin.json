@@ -13,98 +13,80 @@
   "donateUrl": "",
   "modules": [
     {
-      "slug": "BalanceMergePan",
-      "name": "Balance/Merge/Pan",
-      "description": "Balance and merge and pan",
-      "tags": []
-    },
-    {
-      "slug": "QuadLFO",
-      "name": "QuadLFO",
+      "slug": "TRSTURN",
+      "name": "TRS TURN",
       "description": "",
       "tags": []
     },
     {
-      "slug": "TSTRSTS",
-      "name": "TSTRSTS",
-      "description": "Stereo utility",
+      "slug": "TRSSPIN",
+      "name": "TRS SPIN",
+      "description": "",
       "tags": []
     },
     {
-      "slug": "AddSub",
-      "name": "AddSub",
+      "slug": "TRSOPS",
+      "name": "TRS OPS",
       "description": "",
       "tags": []
     },
     {
       "slug": "TRSVCF",
-      "name": "TRSVCF",
+      "name": "TRS VCF",
       "description": "",
       "tags": []
     },
     {
-      "slug": "TRSVCPH",
-      "name": "TRSVCPH",
+      "slug": "TRSPHASER",
+      "name": "TRS PHASER",
       "description": "",
       "tags": []
     },
     {
-      "slug": "TRSMS",
-      "name": "TRSMS",
-      "description": "",
-      "tags": []
-    },
-    {
-      "slug": "TRSMS",
-      "name": "TRSMS",
-      "description": "",
-      "tags": []
-    },
-    {
-      "slug": "TRS8NU8",
-      "name": "TRS8NU8",
+      "slug": "TRSATTENUATORS",
+      "name": "TRS ATTENUATORS",
       "description": "",
       "tags": []
     },
     {
       "slug": "TRS2QVCA",
-      "name": "TRS2QVCA",
+      "name": "TRS 2QVCA",
       "description": "",
       "tags": []
     },
     {
       "slug": "TRSMS2",
-      "name": "TRSMS2",
+      "name": "TRS MS2",
       "description": "",
       "tags": []
     },
     {
       "slug": "TRSSINCOS",
-      "name": "TRSSINCOS",
+      "name": "TRS SINCOS",
       "description": "",
       "tags": []
     },
     {
       "slug": "TRSBBD",
-      "name": "TRSBBD",
-      "description": "",
-      "tags": []
-    },
-    {
-      "slug": "TRSBBDLONG",
-      "name": "TRSBBDLONG",
+      "name": "TRS BBD",
       "description": "",
       "tags": []
     },
     {
       "slug": "TRSXOVER",
-      "name": "TRSXOVER",
+      "name": "TRS XOVER",
       "description": "",
       "tags": []
     },
     {
       "slug": "TRSPEAK",
-      "name": "TRSPEAK",
+      "name": "TRS PEAK",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TRSTS",
+      "name": "TRS TS",
       "description": "",
       "tags": []
     }

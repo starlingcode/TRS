@@ -87,22 +87,22 @@ struct TRS2QVCA : Module {
         int mode = (int) params[MODE1_PARAM].getValue();
 
         switch (mode) {
-            case 0: getCV1 = &TRS2QVCA::rectify;
+            case 2: getCV1 = &TRS2QVCA::rectify;
                 break;
             case 1: getCV1 = &TRS2QVCA::clip;
                 break;
-            case 2: getCV1 = &TRS2QVCA::scale;
+            case 0: getCV1 = &TRS2QVCA::scale;
                 break;
         }
 
         mode = (int) params[MODE2_PARAM].getValue();
 
         switch (mode) {
-            case 0: getCV2 = &TRS2QVCA::rectify;
+            case 2: getCV2 = &TRS2QVCA::rectify;
                 break;
             case 1: getCV2 = &TRS2QVCA::clip;
                 break;
-            case 2: getCV2 = &TRS2QVCA::scale;
+            case 0: getCV2 = &TRS2QVCA::scale;
                 break;
         }
     }

@@ -7,11 +7,12 @@
 using simd::float_4;
 using simd::int32_4;
 
-struct StereoInHandler {
+struct StereoInHandler : Input {
+
 	Input * input;
-	void configure(Input * thisInput) {
-		input = thisInput;
-		input->setChannels(16);
+
+	void configure(Input * inputJack) {
+		input = inputJack;
 	}
 
 	float_4 getLeft(int polySection) {
@@ -32,15 +33,32 @@ struct StereoInHandler {
 		return input->getVoltage(8);
 	}
 
+	float_4 getLeftNormal(float_4 normal, int polySection) {
+		polySection &= 1;
+		return input->getNormalVoltageSimd<float_4>(normal, polySection * 4);
+	}
+
+	float_4 getRightNormal(float_4 normal, int polySection) {
+		polySection &= 1;
+		return input->getNormalVoltageSimd<float_4>(normal, 8 + polySection * 4);
+	}
+
+	float getLeftNormal(float normal) {
+		return input->getNormalVoltage(normal, 0);
+	}
+
+	float getRightNormal(float normal) {
+		return input->getNormalVoltage(normal, 8);
+	}
+
 };
 
-struct StereoOutHandler {
-	
+struct StereoOutHandler : Output {
+
 	Output * output;
-	
-	void configure(Output * thisOutput) {
-		output = thisOutput;
-		output->setChannels(16);
+
+	void configure(Output * outputJack) {
+		output = outputJack;
 	}
 
 	void setLeft(float_4 value, int polySection) {
@@ -63,7 +81,23 @@ struct StereoOutHandler {
 
 };
 
-////// DSP Resources
+//
+// DSP shit
+//
+
+template <typename T = float_4, typename I = int32_4>
+T bhaskaraSine(T in) {
+
+	I phaseHalf = abs(I(floor(in)));
+    phaseHalf &= I(1);
+    T sign = T(1.f) - (T(2.f) * T(phaseHalf));
+    T out = in - floor(in);
+    T pi = T(M_PI);
+    T phase = pi * out;
+    T sine = (T(16.f) * phase * (pi - phase)) / (T(5.f) * pi * pi - T(4.f) * phase * (pi - phase));
+    return sine * sign;
+
+}
 
 template <typename T = float>
 struct TanhBL {
@@ -439,13 +473,13 @@ struct ZDFSVF {
 	T bpOut = T(0);
 	T hpOut = T(0);
 
-	T diodeGain = T(1.f);
+	// T diodeGain = T(1.f);
 
 	void setParams(T freq, T res) {
 
 		T g = tan(T(M_PI) * freq);
     	T k = T(2.f) - T(2) * res;
-    	k *= diodeGain;
+    	// k *= diodeGain;
    		T a1 = T(1.f)/(T(1.f) + g * (g + k));
     	T a2 = g * a1;
    		T a3 = g * a2;
@@ -545,11 +579,12 @@ struct Delay {
 
 // from DAFX '18 Holters and Parker "Combined Model for a Bucket Brigade Device and its Input and Output Filters"
 // a bit excessive because it allows the filters to be designed from an arbitrary PFE
+// but PFE input functionality is not quite there, yet
 
 template <typename T = float, int SIZE = 256, int R_IN = 1, int C_IN = 2, int R_OUT = 1, int C_OUT = 2>
 struct BBD {
 
-	/////////////// Filter stuff 
+	/////////////// Filter design stuff 
 
 	
 	//
@@ -762,7 +797,6 @@ struct BBD {
 
 	}
 
-	// consolidate with above to save a pow
 	T calculateInputWeightB1(float delay, int sectionIndex) {
 
 		return -zBetasIn[sectionIndex] * pow(zpAbsIn[sectionIndex], T(delay + 1.f)) * cos(zrArgIn[sectionIndex] + T(delay - 1.f) * zpArgIn[sectionIndex]);
@@ -817,11 +851,11 @@ struct BBD {
 	// LUT TEST
 	//
 	// for a given filter, a polynomial approximation would be best practice probably
-	// this might work for whatever you throw at it
+	// this works for whatever filter you throw at it without a polynomial approximation routine. someday.
 
 	static const int lutSize = 256;
 	//int paddingDown = 0;
-	int paddingUp = 1;
+	static const int paddingUp = 1;
 
 	T ** inputWeightR;
 	T ** inputWeightB0;
