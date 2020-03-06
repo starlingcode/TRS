@@ -1,94 +1,95 @@
 {
-  "slug": "StarlingTRS",
-  "name": "Starling TRS",
+  "slug": "TRS",
+  "name": "TRS",
   "version": "1.0.0",
   "license": "MIT",
   "brand": "Starling",
   "author": "Starling",
   "authorEmail": "admin@starling.space",
   "authorUrl": "starling.space",
-  "pluginUrl": "starling.space",
-  "manualUrl": "starling.space",
-  "sourceUrl": "",
-  "donateUrl": "",
+  "pluginUrl": "starling.space/trs",
+  "manualUrl": "starling.space/trs/modules",
+  "sourceUrl": "github.com/starlingcode/TRS",
+  "donateUrl": "https://paypal.me/ssttaarrlliinngg",
+  "changelogUrl": "https://github.com/starlingcode/TRS/blob/master/CHANGELOG.md",
   "modules": [
     {
       "slug": "TRSTURN",
       "name": "TRS TURN",
-      "description": "",
-      "tags": []
+      "description": "Panning tools",
+      "tags": ["Attenuator", "Pan", "Polyphonic"]
     },
     {
       "slug": "TRSSPIN",
       "name": "TRS SPIN",
-      "description": "",
-      "tags": []
+      "description": "Dual stereo quadrature LFO",
+      "tags": ["LFO", "Polyphonic", "Dual"]
     },
     {
       "slug": "TRSOPS",
       "name": "TRS OPS",
-      "description": "",
-      "tags": []
+      "description": "Dual stereo adders and multipliers",
+      "tags": ["Mixer", "VCA", "Polyphonic", "Dual"]
     },
     {
       "slug": "TRSVCF",
       "name": "TRS VCF",
-      "description": "",
-      "tags": []
+      "description": "Stereo state variable filter",
+      "tags": ["Filter", "Polyphonic"]
     },
     {
       "slug": "TRSPHASER",
       "name": "TRS PHASER",
-      "description": "",
-      "tags": []
+      "description": "Stereo phaser",
+      "tags": ["Phaser"]
     },
     {
       "slug": "TRSATTENUATORS",
       "name": "TRS ATTENUATORS",
-      "description": "",
-      "tags": []
+      "description": "Stereo attenuators",
+      "tags": ["Attenuator", "Polyphonic", "Dual"]
     },
     {
       "slug": "TRS2QVCA",
       "name": "TRS 2QVCA",
-      "description": "",
-      "tags": []
+      "description": "Dual stereo VCA with complementary input",
+      "tags": ["VCA", "Polyphonic", "Dual"]
     },
     {
       "slug": "TRSMS2",
       "name": "TRS MS2",
-      "description": "",
-      "tags": []
+      "description": "Dual stereo mid/side encoder and decoder",
+      "tags": ["Utility", "Polyphonic", "Dual"]
     },
     {
       "slug": "TRSSINCOS",
       "name": "TRS SINCOS",
-      "description": "",
-      "tags": []
+      "description": "Stereo sine shaper",
+      "tags": ["Waveshaper", "Polyphonic"]
     },
     {
       "slug": "TRSBBD",
       "name": "TRS BBD",
-      "description": "",
-      "tags": []
+      "description": "Stereo bucket brigade style delay",
+      "tags": ["Delay"]
     },
     {
       "slug": "TRSXOVER",
       "name": "TRS XOVER",
-      "description": "",
-      "tags": []
+      "description": "Stereo crossover",
+      "tags": ["Equalizer", "Polyphonic"]
     },
     {
       "slug": "TRSPEAK",
       "name": "TRS PEAK",
-      "description": "",
-      "tags": []
+      "description": "Stereo peak follower",
+      "tags": ["Envelope Follower", "Polyphonic"]
     },
     {
       "slug": "TRSTS",
       "name": "TRS TS",
-      "description": "",
-      "tags": []
+      "description": "Mono to stereo over TRS cable converter",
+      "tags": ["Utility", "Polyphonic", "Dual"]
     }
   ]
 }

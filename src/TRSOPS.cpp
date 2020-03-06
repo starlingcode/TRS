@@ -72,16 +72,16 @@ struct TRSOPS : Module {
 
             stereo34Out.setRight(stereo3In.getRight() + stereo4In.getRight(), polyChunk);
 
-            float_4 cv = clamp(float_4(.0f), float_4(5.f), stereo6In.getLeft()/5.f); 
+            float_4 cv = stereo6In.getLeft()/5.f; 
             stereo56Out.setLeft((stereo5In.getLeft() * cv), polyChunk);
 
-            cv = clamp(float_4(.0f), float_4(5.f), stereo6In.getRight()/5.f); 
+            cv = stereo6In.getRight()/5.f; 
             stereo56Out.setRight((stereo5In.getRight() * cv), polyChunk);
 
-            cv = clamp(float_4(.0f), float_4(5.f), stereo8In.getLeft()/5.f); 
+            cv = stereo8In.getLeft()/5.f; 
             stereo78Out.setLeft((stereo7In.getLeft() * cv), polyChunk);
             
-            cv = clamp(float_4(.0f), float_4(5.f), stereo8In.getRight()/5.f); 
+            cv = stereo8In.getRight()/5.f; 
             stereo78Out.setRight((stereo7In.getRight() * cv), polyChunk);
 
         }
