@@ -17,79 +17,136 @@
       "slug": "TRSTURN",
       "name": "TRS TURN",
       "description": "Panning tools",
-      "tags": ["Attenuator", "Pan", "Polyphonic"]
+      "tags": [
+        "Attenuator",
+        "Pan",
+        "Polyphonic"
+      ]
     },
     {
       "slug": "TRSSPIN",
       "name": "TRS SPIN",
       "description": "Dual stereo quadrature LFO",
-      "tags": ["LFO", "Polyphonic", "Dual"]
+      "tags": [
+        "LFO",
+        "Polyphonic",
+        "Dual"
+      ]
     },
     {
       "slug": "TRSOPS",
       "name": "TRS OPS",
       "description": "Dual stereo adders and multipliers",
-      "tags": ["Mixer", "VCA", "Polyphonic", "Dual"]
+      "tags": [
+        "Mixer",
+        "VCA",
+        "Polyphonic",
+        "Dual"
+      ]
     },
     {
       "slug": "TRSVCF",
       "name": "TRS VCF",
       "description": "Stereo state variable filter",
-      "tags": ["Filter", "Polyphonic"]
+      "tags": [
+        "Filter",
+        "Polyphonic"
+      ]
     },
     {
       "slug": "TRSPHASER",
       "name": "TRS PHASER",
       "description": "Stereo phaser",
-      "tags": ["Phaser"]
+      "tags": [
+        "Phaser"
+      ]
     },
     {
       "slug": "TRSATTENUATORS",
       "name": "TRS ATTENUATORS",
       "description": "Stereo attenuators",
-      "tags": ["Attenuator", "Polyphonic", "Dual"]
+      "tags": [
+        "Attenuator",
+        "Polyphonic",
+        "Dual"
+      ]
     },
     {
       "slug": "TRS2QVCA",
       "name": "TRS 2QVCA",
       "description": "Dual stereo VCA with complementary input",
-      "tags": ["VCA", "Polyphonic", "Dual"]
+      "tags": [
+        "VCA",
+        "Polyphonic",
+        "Dual"
+      ]
     },
     {
       "slug": "TRSMS2",
       "name": "TRS MS2",
       "description": "Dual stereo mid/side encoder and decoder",
-      "tags": ["Utility", "Polyphonic", "Dual"]
+      "tags": [
+        "Utility",
+        "Polyphonic",
+        "Dual"
+      ]
     },
     {
       "slug": "TRSSINCOS",
       "name": "TRS SINCOS",
       "description": "Stereo sine shaper",
-      "tags": ["Waveshaper", "Polyphonic"]
+      "tags": [
+        "Waveshaper",
+        "Polyphonic"
+      ]
     },
     {
       "slug": "TRSBBD",
       "name": "TRS BBD",
       "description": "Stereo bucket brigade style delay",
-      "tags": ["Delay"]
+      "tags": [
+        "Delay"
+      ]
     },
     {
       "slug": "TRSXOVER",
       "name": "TRS XOVER",
       "description": "Stereo crossover",
-      "tags": ["Equalizer", "Polyphonic"]
+      "tags": [
+        "Equalizer",
+        "Polyphonic"
+      ]
     },
     {
       "slug": "TRSPEAK",
       "name": "TRS PEAK",
       "description": "Stereo peak follower",
-      "tags": ["Envelope Follower", "Polyphonic"]
+      "tags": [
+        "Envelope Follower",
+        "Polyphonic"
+      ]
     },
     {
       "slug": "TRSTS",
       "name": "TRS TS",
       "description": "Mono to stereo over TRS cable converter",
-      "tags": ["Utility", "Polyphonic", "Dual"]
+      "tags": [
+        "Utility",
+        "Polyphonic",
+        "Dual"
+      ]
+    },
+    {
+      "slug": "TRSMULTMETER",
+      "name": "TRSMULTMETER",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "TRSPRE",
+      "name": "TRSPRE",
+      "description": "",
+      "tags": []
     }
   ]
 }

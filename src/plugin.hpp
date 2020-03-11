@@ -20,3 +20,5 @@ extern Model *modelTRSSINCOS;
 extern Model *modelTRSBBD;
 extern Model *modelTRSPEAK;
 extern Model *modelTRSXOVER;
+extern Model *modelTRSPRE;
+extern Model *modelTRSMULTMETER;
