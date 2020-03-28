@@ -27,14 +27,14 @@ struct TRSSINCOS : Module {
     
     StereoOutHandler output;
 
-    // phase 0 - pi
+    // // phase 0 - pi
 
-    float_4 bhaskaraSine(float_4 phase) {
+    // float_4 bhaskaraSine(float_4 phase) {
 
-        float_4 pi = float_4(M_PI);
+    //     float_4 pi = float_4(M_PI);
 
-        return (float_4(16.f) * phase * (pi - phase)) / (float_4(5.f) * pi * pi - float_4(4.f) * phase * (pi - phase));
-    }
+    //     return (float_4(16.f) * phase * (pi - phase)) / (float_4(5.f) * pi * pi - float_4(4.f) * phase * (pi - phase));
+    // }
 
     #define SINCOS_OVERSAMPLE 4
 

@@ -21,18 +21,18 @@ struct TRSPRE : Module {
         NUM_OUTPUTS
     };
     enum LightIds {
-        INL1_LIGHT,
-        OUTL1_LIGHT,
-        INR1_LIGHT,
-        OUTR1_LIGHT,
-        INL2_LIGHT,
-        OUTL2_LIGHT,
-        INR2_LIGHT,
-        OUTR2_LIGHT,
-        INL3_LIGHT,
-        OUTL3_LIGHT,
-        INR3_LIGHT,
-        OUTR3_LIGHT,
+        LOK1_LIGHT,
+        ROK1_LIGHT,
+        LCLIP1_LIGHT,
+        RCLIP1_LIGHT,
+        LOK2_LIGHT,
+        ROK2_LIGHT,
+        LCLIP2_LIGHT,
+        RCLIP2_LIGHT,
+        LOK3_LIGHT,
+        ROK3_LIGHT,
+        LCLIP3_LIGHT,
+        RCLIP3_LIGHT,
         NUM_LIGHTS
     };
 
@@ -103,35 +103,38 @@ struct TRSPRE : Module {
 
         if (lightDivider.process()) {
 
-            float value = abs(in1.getLeft() / 5.f);
-            lights[INL1_LIGHT].setBrightness(value);
-            value = value * params[GAIN1_PARAM].getValue();
-            lights[OUTL1_LIGHT].setBrightness(value);
+            float outl = abs(in1.getLeft() * params[GAIN1_PARAM].getValue()) / 5.f;
+            float outr = abs(in1.getRight() * params[GAIN1_PARAM].getValue()) / 5.f;
+            bool clippingl = outl > 1.f;
+            bool clippingr = outr > 1.f;
+            bool okl = outl > .2f;
+            bool okr = outr > .2f;
+            lights[LOK1_LIGHT].setSmoothBrightness(okl, 20.f/44100.f);
+            lights[ROK1_LIGHT].setSmoothBrightness(okr, 20.f/44100.f);
+            lights[LCLIP1_LIGHT].setSmoothBrightness(clippingl, 20.f/44100.f);
+            lights[RCLIP1_LIGHT].setSmoothBrightness(clippingr, 20.f/44100.f);
 
-            value = abs(in1.getRight() / 5.f);
-            lights[INR1_LIGHT].setBrightness(value);
-            value = value * params[GAIN1_PARAM].getValue();
-            lights[OUTR1_LIGHT].setBrightness(value);
+            outl = abs(in2.getLeft() * params[GAIN2_PARAM].getValue()) / 5.f;
+            outr = abs(in2.getRight() * params[GAIN2_PARAM].getValue()) / 5.f;
+            clippingl = outl > 1.f;
+            clippingr = outr > 1.f;
+            okl = outl > .2f;
+            okr = outr > .2f;
+            lights[LOK2_LIGHT].setSmoothBrightness(okl, 20.f/44100.f);
+            lights[ROK2_LIGHT].setSmoothBrightness(okr, 20.f/44100.f);
+            lights[LCLIP2_LIGHT].setSmoothBrightness(clippingl, 20.f/44100.f);
+            lights[RCLIP2_LIGHT].setSmoothBrightness(clippingr, 20.f/44100.f);
 
-            value = abs(in2.getLeft() / 5.f);
-            lights[INL2_LIGHT].setBrightness(value);
-            value = value * params[GAIN2_PARAM].getValue();
-            lights[OUTL2_LIGHT].setBrightness(value);
-
-            value = abs(in2.getRight() / 5.f);
-            lights[INR2_LIGHT].setBrightness(value);
-            value = value * params[GAIN2_PARAM].getValue();
-            lights[OUTR2_LIGHT].setBrightness(value);
-
-            value = abs(in3.getLeft() / 5.f);
-            lights[INL3_LIGHT].setBrightness(value);
-            value = value * params[GAIN3_PARAM].getValue();
-            lights[OUTL3_LIGHT].setBrightness(value);
-
-            value = abs(in3.getRight() / 5.f);
-            lights[INR3_LIGHT].setBrightness(value);
-            value = value * params[GAIN3_PARAM].getValue();
-            lights[OUTR3_LIGHT].setBrightness(value);
+            outl = abs(in3.getLeft() * params[GAIN3_PARAM].getValue()) / 5.f;
+            outr = abs(in3.getRight() * params[GAIN3_PARAM].getValue()) / 5.f;
+            clippingl = outl > 1.f;
+            clippingr = outr > 1.f;
+            okl = outl > .2f;
+            okr = outr > .2f;
+            lights[LOK3_LIGHT].setSmoothBrightness(okl, 20.f/44100.f);
+            lights[ROK3_LIGHT].setSmoothBrightness(okr, 20.f/44100.f);
+            lights[LCLIP3_LIGHT].setSmoothBrightness(clippingl, 20.f/44100.f);
+            lights[RCLIP3_LIGHT].setSmoothBrightness(clippingr, 20.f/44100.f);
 
         }
 
@@ -159,18 +162,18 @@ struct TRSPREWidget : ModuleWidget {
         addOutput(createOutputCentered<HexJack>(mm2px(Vec(22.049, 74.868)), module, TRSPRE::OUT2_OUTPUT));
         addOutput(createOutputCentered<HexJack>(mm2px(Vec(21.806, 113.502)), module, TRSPRE::OUT3_OUTPUT));
 
-        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(4.787, 11.237)), module, TRSPRE::INL1_LIGHT));
-        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(26.637, 11.237)), module, TRSPRE::OUTL1_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(4.787, 17.253)), module, TRSPRE::INR1_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(26.637, 17.253)), module, TRSPRE::OUTR1_LIGHT));
-        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(4.787, 50.587)), module, TRSPRE::INL2_LIGHT));
-        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(26.637, 50.587)), module, TRSPRE::OUTL2_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(4.787, 56.603)), module, TRSPRE::INR2_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(26.637, 56.603)), module, TRSPRE::OUTR2_LIGHT));
-        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(4.649, 86.588)), module, TRSPRE::INL3_LIGHT));
-        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(26.498, 86.588)), module, TRSPRE::OUTL3_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(4.649, 92.246)), module, TRSPRE::INR3_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(26.498, 92.246)), module, TRSPRE::OUTR3_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(4.787, 11.237)), module, TRSPRE::LCLIP1_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(26.637, 11.237)), module, TRSPRE::RCLIP1_LIGHT));
+        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(4.787, 17.253)), module, TRSPRE::LOK1_LIGHT));
+        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(26.637, 17.253)), module, TRSPRE::ROK1_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(4.787, 50.587)), module, TRSPRE::LCLIP2_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(26.637, 50.587)), module, TRSPRE::RCLIP2_LIGHT));
+        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(4.787, 56.603)), module, TRSPRE::LOK2_LIGHT));
+        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(26.637, 56.603)), module, TRSPRE::ROK2_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(4.649, 86.588)), module, TRSPRE::LCLIP3_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(26.498, 86.588)), module, TRSPRE::RCLIP3_LIGHT));
+        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(4.649, 92.246)), module, TRSPRE::LOK3_LIGHT));
+        addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(26.498, 92.246)), module, TRSPRE::ROK3_LIGHT));
     }
 };
 

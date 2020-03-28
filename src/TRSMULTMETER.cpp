@@ -72,31 +72,32 @@ struct TRSMULTMETER : Module {
 
         float viz = inTop.getLeft();
         float threshhold = 7.5 - float(ledRoundRobin);
+        #define _LED_FRAMES 20.f
         if ((sgn(threshhold) * viz) > abs(threshhold)) {
-            lights[ledRoundRobin].setBrightness(1.f);
+            lights[ledRoundRobin].setSmoothBrightness(1.f, _LED_FRAMES/44100.f);
         } else {
-            lights[ledRoundRobin].setBrightness(0.f);
+            lights[ledRoundRobin].setSmoothBrightness(0.f, _LED_FRAMES/44100.f);
         }
 
         viz = inTop.getRight();
         if ((sgn(threshhold) * viz) > abs(threshhold)) {
-            lights[16 + ledRoundRobin].setBrightness(1.f);
+            lights[16 + ledRoundRobin].setSmoothBrightness(1.f, _LED_FRAMES/44100.f);
         } else {
-            lights[16 + ledRoundRobin].setBrightness(0.f);
+            lights[16 + ledRoundRobin].setSmoothBrightness(0.f, _LED_FRAMES/44100.f);
         }
 
         viz = inBottom.getLeft();
         if ((sgn(threshhold) * viz) > abs(threshhold)) {
-            lights[32 + ledRoundRobin].setBrightness(1.f);
+            lights[32 + ledRoundRobin].setSmoothBrightness(1.f, _LED_FRAMES/44100.f);
         } else {
-            lights[32 + ledRoundRobin].setBrightness(0.f);
+            lights[32 + ledRoundRobin].setSmoothBrightness(0.f, _LED_FRAMES/44100.f);
         }
 
         viz = inBottom.getRight();
         if ((sgn(threshhold) * viz) > abs(threshhold)) {
-            lights[48 + ledRoundRobin].setBrightness(1.f);
+            lights[48 + ledRoundRobin].setSmoothBrightness(1.f, _LED_FRAMES/44100.f);
         } else {
-            lights[48 + ledRoundRobin].setBrightness(0.f);
+            lights[48 + ledRoundRobin].setSmoothBrightness(0.f, _LED_FRAMES/44100.f);
         }
 
         ledRoundRobin ++;

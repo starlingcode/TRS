@@ -19,8 +19,7 @@
       "description": "Panning tools",
       "tags": [
         "Attenuator",
-        "Pan",
-        "Polyphonic"
+        "Pan"
       ]
     },
     {
@@ -67,7 +66,6 @@
       "description": "Stereo attenuators",
       "tags": [
         "Attenuator",
-        "Polyphonic",
         "Dual"
       ]
     },
@@ -131,22 +129,20 @@
       "name": "TRS TS",
       "description": "Mono to stereo over TRS cable converter",
       "tags": [
-        "Utility",
-        "Polyphonic",
-        "Dual"
+        "Utility"
       ]
     },
     {
       "slug": "TRSMULTMETER",
       "name": "TRSMULTMETER",
       "description": "",
-      "tags": []
+      "tags": ["Multiple", "Visual"]
     },
     {
       "slug": "TRSPRE",
       "name": "TRSPRE",
       "description": "",
-      "tags": []
+      "tags": ["Attenuator", "Distortion", "Polyphonic"]
     }
   ]
 }
