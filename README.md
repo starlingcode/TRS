@@ -1,6 +1,27 @@
+
 # TRS
-Modules use Rack's polyphonic cables to model analog eurorack modules that pass signals in (stereo) pairs over TRS cables.
 
-Support for up to 8 polyphonic stereo pairs on one cable.
+Rack mockups of modules that pass stereo signals over TRS.
 
-Use TSTRSTS module to "load" mono signals onto the TRS cabling system and "unload" stereo pairs to two mono outputs.
+User documentation can be found here: https://starling.space/trs/modules
+
+## Build Instructions
+
+First, build Rack (https://vcvrack.com/manual/Building.html)
+
+Change the current directory to Rack/plugins and clone the repo:
+```
+git clone https://github.com/starlingcode/TRS.git
+```
+Navigate to the Via plugin directory:
+```
+cd TRS
+```
+Update the submodules:
+```
+git submodule update --init --recursive
+```
+Then, build the plugins:
+```
+make
+```
