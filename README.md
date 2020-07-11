@@ -1,7 +1,7 @@
 
 # TRS
 
-Rack mockups of modules that pass stereo signals over TRS.
+Rack mockups of modules that pass stereo signals over TRS cables.
 
 User documentation can be found here: https://starling.space/trs/modules
 
