@@ -83,10 +83,10 @@ struct TRSSPIN : Module {
             bottomQuadrature -= (bottomQuadrature >= 1.f) & 1.f;
 
             // replace with approx
-            topPhase = bhaskaraSine(topPhase * float_4(2.f) - float_4(1.f)) * 5.f;
-            topQuadrature = bhaskaraSine(topQuadrature * float_4(2.f) - float_4(1.f)) * 5.f;
-            bottomPhase = bhaskaraSine(bottomPhase * float_4(2.f) - float_4(1.f)) * 5.f;
-            bottomQuadrature = bhaskaraSine(bottomQuadrature * float_4(2.f) - float_4(1.f)) * 5.f;
+            topPhase = bhaskaraSine<float_4, int32_4>(topPhase * float_4(2.f) - float_4(1.f)) * 5.f;
+            topQuadrature = bhaskaraSine<float_4, int32_4>(topQuadrature * float_4(2.f) - float_4(1.f)) * 5.f;
+            bottomPhase = bhaskaraSine<float_4, int32_4>(bottomPhase * float_4(2.f) - float_4(1.f)) * 5.f;
+            bottomQuadrature = bhaskaraSine<float_4, int32_4>(bottomQuadrature * float_4(2.f) - float_4(1.f)) * 5.f;
 
             topLFO12Out.setLeft(topPhase, polyChunk);
             topLFO12Out.setRight(topQuadrature, polyChunk);

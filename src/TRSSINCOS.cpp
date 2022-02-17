@@ -71,7 +71,7 @@ struct TRSSINCOS : Module {
             upsamplers[0][polyChunk].process(in);
             for (int i = 0; i < SINCOS_OVERSAMPLE; i++) {
                 in = upsamplers[0][polyChunk].output[i];
-                work[i] = bhaskaraSine(in);
+                work[i] = bhaskaraSine<float_4, int32_4>(in);
             }
             float_4 out = decimators[0][polyChunk].process(work);            
             output.setLeft(out * float_4(5.f), polyChunk);
@@ -87,7 +87,7 @@ struct TRSSINCOS : Module {
             upsamplers[1][polyChunk].process(in);
             for (int i = 0; i < SINCOS_OVERSAMPLE; i++) {
                 in = upsamplers[1][polyChunk].output[i];
-                work[i] = bhaskaraSine(in);
+                work[i] = bhaskaraSine<float_4, int32_4>(in);
             }
             out = decimators[1][polyChunk].process(work);            
             output.setRight(out * float_4(5.f), polyChunk);

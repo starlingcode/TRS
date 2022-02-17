@@ -21,7 +21,8 @@ struct HexJack : SvgPort {
 template <typename TBase>
 struct MeterLight : TBase {
 	MeterLight() {
-		this->box.size = app::mm2px(math::Vec(2.45, 2.45));
+		this->box.size = window::mm2px(math::Vec(2.45, 2.45));
+
 	}
 };
 
