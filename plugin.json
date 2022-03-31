@@ -90,8 +90,8 @@
       ]
     },
     {
-      "slug": "TRSSINCOS",
-      "name": "TRS SINCOS",
+      "slug": "TRSSIN",
+      "name": "TRS SIN",
       "description": "Stereo sine shaper",
       "tags": [
         "Waveshaper",

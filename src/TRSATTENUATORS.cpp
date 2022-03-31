@@ -16,6 +16,12 @@ struct TRSATTENUATORS : Module {
         IN2_INPUT,
         IN3_INPUT,
         IN4_INPUT,
+        CV1_INPUT,
+        TCV2_INPUT,
+        RCV2_INPUT,
+        TCV3_INPUT,
+        RCV3_INPUT,
+        CV4_INPUT,
         NUM_INPUTS
     };
     enum OutputIds {
@@ -37,6 +43,13 @@ struct TRSATTENUATORS : Module {
     StereoInHandler in2;
     StereoInHandler in3;
     StereoInHandler in4;
+
+    StereoInHandler cv1;
+    StereoInHandler tcv2;
+    StereoInHandler rcv2;
+    StereoInHandler tcv3;
+    StereoInHandler rcv3;    
+    StereoInHandler cv4;
 
     StereoOutHandler out1;
     StereoOutHandler out2;
@@ -60,6 +73,13 @@ struct TRSATTENUATORS : Module {
         in2.configure(&inputs[IN2_INPUT]);
         in3.configure(&inputs[IN3_INPUT]);
         in4.configure(&inputs[IN4_INPUT]);
+
+        cv1.configure(&inputs[CV1_INPUT]);
+        tcv2.configure(&inputs[TCV2_INPUT]);
+        rcv2.configure(&inputs[RCV2_INPUT]);
+        tcv3.configure(&inputs[TCV3_INPUT]);
+        rcv3.configure(&inputs[RCV3_INPUT]);
+        cv4.configure(&inputs[CV4_INPUT]);
 
         out1.configure(&outputs[POS1_OUTPUT]);
         out2.configure(&outputs[POS2_OUTPUT]);
@@ -95,7 +115,7 @@ struct TRSATTENUATORS : Module {
         float_4 att4 = float_4(params[ATT4_PARAM].getValue());
 
         for (int polyChunk = 0; polyChunk < 2; polyChunk++) {
-            out1.setLeft(in1.getLeft(polyChunk) * att1, polyChunk);
+            out1.setLeft(in1.getLeft(polyChunk) * att1 * , polyChunk);
             out1.setRight(in1.getRight(polyChunk) * att1, polyChunk);
 
             out2.setLeft(in2.getLeft(polyChunk) * att2L, polyChunk);

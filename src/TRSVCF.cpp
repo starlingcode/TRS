@@ -4,6 +4,7 @@ struct TRSVCF : Module {
     enum ParamIds {
         FREQ_PARAM,
         RES_PARAM,
+        RANGE_PARAM,
         NUM_PARAMS
     };
     enum InputIds {
@@ -25,8 +26,6 @@ struct TRSVCF : Module {
     };
 
     StereoInHandler signalIn;
-    StereoInHandler normIn;
-    StereoInHandler linCV;
     StereoInHandler expoCV;
     StereoInHandler resCV;
 
@@ -36,12 +35,11 @@ struct TRSVCF : Module {
 
     TRSVCF() {
         config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
-        configParam(FREQ_PARAM, -5.f, 5.f, 0.f, "");
-        configParam(RES_PARAM, 0.f, 1.f, 0.f, "");
+        configParam(FREQ_PARAM, -5.f, 5.f, 0.f, "Frequency");
+        configParam(RES_PARAM, 0.f, 1.f, 0.f, "Resonance");
+        configSwitch(RANGE_PARAM, 0.f, 1.f, 0.f, "Frequency Range", {"Haptic", "Audio"});
 
         signalIn.configure(&inputs[IN_INPUT]);
-        normIn.configure(&inputs[NORM_INPUT]);
-        linCV.configure(&inputs[LIN_INPUT]);
         expoCV.configure(&inputs[EXP_INPUT]);
         resCV.configure(&inputs[RES_INPUT]);
 
@@ -72,8 +70,7 @@ struct TRSVCF : Module {
         for (int polyChunk = 0; polyChunk < 2; polyChunk++) {
 
             float_4 freql = clamp(expoCV.getLeft(polyChunk) + float_4(params[FREQ_PARAM].getValue()), float_4(-10.f), float_4(10.f));
-            freql = float_4(480.f) * (dsp::approxExp2_taylor5(freql + 10.f)/float_4(1024.f)) * Ts;
-            freql *= clamp((linCV.getLeft(polyChunk) / float_4(5.f)) + float_4(1.f), 0.1f, 2.f);
+            freql = float_4(2.f * 480.f * params[RANGE_PARAM].getValue()) * (dsp::approxExp2_taylor5(freql + 10.f)/float_4(1024.f)) * Ts;
             freql = clamp(freql, 0.f, .49f);
 
             float_4 res = (resCV.getLeft(polyChunk) / float_4(10.f));
@@ -83,7 +80,7 @@ struct TRSVCF : Module {
             res = float_4(1.f) - res + float_4(1.f/256.f);
 
             filters[0][polyChunk].setParams(freql, res);
-            float_4 in = signalIn.getLeft() + normIn.getLeft() * (float_4(1.f) - (res * float_4(.9f)));
+            float_4 in = signalIn.getLeft() * (float_4(1.f) - (res * float_4(.9f)));
             // up[0][polyChunk].process(in);
             // for (int i = 0; i < 4; i++) {
             //     filters[0][polyChunk].process(up[0][polyChunk].output[i]);
@@ -103,8 +100,7 @@ struct TRSVCF : Module {
             lpOut.setLeft(filters[0][polyChunk].lpOut, polyChunk);
 
             float_4 freqr = clamp(expoCV.getRight(polyChunk) + float_4(params[FREQ_PARAM].getValue()), float_4(-10.f), float_4(10.f));
-            freqr = float_4(480.f) * (dsp::approxExp2_taylor5(freqr + 10.f)/float_4(1024.f)) * Ts;
-            freqr *= clamp((linCV.getRight(polyChunk) / float_4(5.f)) + float_4(1.f), 0.1f, 2.f);
+            freqr = float_4(2.f * 480.f * params[RANGE_PARAM].getValue()) * (dsp::approxExp2_taylor5(freqr + 10.f)/float_4(1024.f)) * Ts;
             freqr = clamp(freqr, 0.f, .49f);
 
             res = (resCV.getRight(polyChunk) / float_4(10.f));
@@ -114,7 +110,7 @@ struct TRSVCF : Module {
             res = float_4(1.f) - res + float_4(1.f/256.f);
 
             filters[1][polyChunk].setParams(freqr, res);
-            in = signalIn.getRight() + normIn.getRight() * (float_4(1.f) - (res * float_4(.9f)));
+            in = signalIn.getRight() * (float_4(1.f) - (res * float_4(.9f)));
             // up[1][polyChunk].process(in);
             // for (int i = 0; i < 4; i++) {
             //     filters[1][polyChunk].process(up[1][polyChunk].output[i]);
@@ -151,10 +147,9 @@ struct TRSVCFWidget : ModuleWidget {
 
         addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 17.609)), module, TRSVCF::FREQ_PARAM));
         addParam(createParamCentered<SifamGrey>(mm2px(Vec(15.225, 41.109)), module, TRSVCF::RES_PARAM));
+		addParam(createParamCentered<NKK_2>(mm2px(Vec(15.225, 2 * 41.109 - 17.609)), module, TRSVCF::RANGE_PARAM));
 
-        addInput(createInputCentered<HexJack>(mm2px(Vec(8.95, 71.496)), module, TRSVCF::IN_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(21.777, 71.496)), module, TRSVCF::NORM_INPUT));
-        addInput(createInputCentered<HexJack>(mm2px(Vec(8.95, 85.501)), module, TRSVCF::LIN_INPUT));
+        addInput(createInputCentered<HexJack>(mm2px(Vec(8.95, 85.5)), module, TRSVCF::IN_INPUT));
         addInput(createInputCentered<HexJack>(mm2px(Vec(8.952, 99.498)), module, TRSVCF::EXP_INPUT));
         addInput(createInputCentered<HexJack>(mm2px(Vec(8.952, 113.499)), module, TRSVCF::RES_INPUT));
 

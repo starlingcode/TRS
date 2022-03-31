@@ -17,7 +17,7 @@ void init(Plugin *p) {
     p->addModel(modelTRSMS2);
     p->addModel(modelTRSATTENUATORS);
     p->addModel(modelTRS2QVCA);
-    p->addModel(modelTRSSINCOS);
+    p->addModel(modelTRSSIN);
     p->addModel(modelTRSBBD);
     p->addModel(modelTRSPEAK);
     p->addModel(modelTRSXOVER);

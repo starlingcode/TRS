@@ -16,7 +16,7 @@ extern Model *modelTRSPHASER;
 extern Model *modelTRSMS2;
 extern Model *modelTRSATTENUATORS;
 extern Model *modelTRS2QVCA;
-extern Model *modelTRSSINCOS;
+extern Model *modelTRSSIN;
 extern Model *modelTRSBBD;
 extern Model *modelTRSPEAK;
 extern Model *modelTRSXOVER;

@@ -2,7 +2,9 @@
 RACK_DIR ?= ../..
 
 # FLAGS will be passed to both the C and C++ compiler
-FLAGS += -I./dep/starling-dsp/
+FLAGS += -I./dep/starling-dsp/ \
+            -I./dep/starling-rack-ui/ \
+
 CFLAGS +=
 CXXFLAGS += 
 

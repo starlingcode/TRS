@@ -1,5 +1,5 @@
 #include "plugin.hpp"
-#include "ui.hpp"
+#include "starling-rack-ui.hpp"
 #include "starling-dsp.hpp"
 
 using simd::float_4;
